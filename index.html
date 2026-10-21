@@ -1,0 +1,1233 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Palets Barra Danbo</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: cabecera fija con pestañas; tablero de palets en grilla; formularios y tablas en paneles anchos. Estética de cámara frigorífica: gris azulado frío, teal para acciones, amarillo queso solo en las barras de stock. */
+:root {
+  --bg: #EDF1F3;
+  --surface: #FFFFFF;
+  --surface2: #F4F7F8;
+  --ink: #12222C;
+  --ink2: #4B5F6B;
+  --line: #D3DDE2;
+  --accent: #0B5C73;
+  --accent-ink: #FFFFFF;
+  --cheese: #F0C23A;
+  --ok: #2B7A4B;
+  --warn: #B45309;
+  --bad: #B42318;
+  --ok-bg: #E4F3EA;
+  --warn-bg: #FBEBD6;
+  --bad-bg: #FBE3E0;
+  --info-bg: #DDEEF3;
+  --f-display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E171C; --surface: #16232A; --surface2: #1B2B33; --ink: #E6EEF1; --ink2: #9FB3BD; --line: #2A3C45;
+    --accent: #5CC0D9; --accent-ink: #06222B; --cheese: #E8B92E; --ok: #5CC389; --warn: #F0A04B; --bad: #FF8A7A;
+    --ok-bg: #153325; --warn-bg: #3A2A12; --bad-bg: #3B1B18; --info-bg: #12303A;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E171C; --surface: #16232A; --surface2: #1B2B33; --ink: #E6EEF1; --ink2: #9FB3BD; --line: #2A3C45;
+  --accent: #5CC0D9; --accent-ink: #06222B; --cheese: #E8B92E; --ok: #5CC389; --warn: #F0A04B; --bad: #FF8A7A;
+  --ok-bg: #153325; --warn-bg: #3A2A12; --bad-bg: #3B1B18; --info-bg: #12303A;
+  color-scheme: dark;
+}
+[hidden] { display: none !important; }
+html { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 14px; line-height: 1.45; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 0 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3, p { margin: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+.muted { color: var(--ink2); }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+
+/* cabecera */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); padding-top: 14px; }
+.brand { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.stencil { font-family: var(--f-display); font-weight: 700; font-size: 30px; letter-spacing: .08em; text-transform: uppercase; line-height: 1; }
+.brandsub { color: var(--ink2); font-size: 13px; letter-spacing: .02em; }
+.tabs { display: flex; gap: 4px; overflow-x: auto; margin-top: 10px; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab { appearance: none; background: none; border: 0; border-bottom: 3px solid transparent; padding: 10px 14px; cursor: pointer; font-weight: 500; color: var(--ink2); white-space: nowrap; display: inline-flex; gap: 8px; align-items: center; }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.tab:hover { color: var(--ink); }
+.count { font-family: var(--f-mono); font-size: 11px; background: var(--ink); color: var(--bg); border-radius: 99px; padding: 1px 7px; }
+.count.bad { background: var(--bad); color: #fff; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+main { display: flex; flex-direction: column; gap: 28px; padding-top: 24px; }
+.sechead { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; margin-bottom: 14px; }
+.sechead h2 { font-family: var(--f-display); font-size: 26px; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; margin-right: auto; }
+.lead { color: var(--ink2); max-width: 65ch; }
+
+/* resumen */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; }
+.stat { padding: 16px 20px; border-right: 1px solid var(--line); min-width: 0; }
+.stat:last-child { border-right: 0; }
+.stat .l { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink2); }
+.stat .v { font-family: var(--f-display); font-size: 44px; font-weight: 600; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.stat .s { font-size: 12px; color: var(--ink2); }
+@media (max-width: 720px) { .stat { border-right: 0; border-bottom: 1px solid var(--line); } .stat:last-child { border-bottom: 0; } }
+
+/* alertas */
+.alerts { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; }
+.alerts header { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.alerts header h2 { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; margin-right: auto; }
+.alerts ul { list-style: none; margin: 0; padding: 0; }
+.alerts li { display: flex; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--line); align-items: flex-start; }
+.alerts li:last-child { border-bottom: 0; }
+.dot { flex: none; width: 10px; height: 10px; margin-top: 6px; border-radius: 50%; background: var(--warn); }
+.dot.bad { background: var(--bad); border-radius: 2px; transform: rotate(45deg); }
+.calm { padding: 14px 16px; color: var(--ok); display: flex; gap: 10px; align-items: center; }
+.calm .dot { background: var(--ok); margin: 0; }
+
+/* controles */
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--surface); }
+.seg button { appearance: none; background: none; border: 0; padding: 7px 14px; cursor: pointer; color: var(--ink2); border-right: 1px solid var(--line); }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.field label, .lbl { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink2); }
+input[type="text"], input[type="date"], input[type="number"], input[type="search"], select, textarea { background: var(--surface); border: 1px solid var(--line); border-radius: 5px; padding: 8px 10px; min-width: 0; width: 100%; }
+textarea { min-height: 72px; resize: vertical; font-family: var(--f-mono); }
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 0; border-color: var(--accent); }
+.btn { appearance: none; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); border-radius: 5px; padding: 8px 16px; font-weight: 600; cursor: pointer; }
+.btn:hover { filter: brightness(1.08); }
+.btn.sec { background: transparent; color: var(--accent); }
+.btn.sm { padding: 4px 10px; font-size: 13px; }
+.btn.danger { border-color: var(--bad); color: var(--bad); background: transparent; }
+.btn.danger.armed { background: var(--bad); color: #fff; }
+.btn:disabled { opacity: .4; cursor: not-allowed; filter: none; }
+.row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.row > .field { flex: 1 1 160px; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 18px; display: flex; flex-direction: column; gap: 16px; }
+.panel h3 { font-family: var(--f-display); font-size: 20px; letter-spacing: .04em; text-transform: uppercase; font-weight: 600; }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+@media (min-width: 900px) { .cols.two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+
+/* palets */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+.pal { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.pal.has-alert { border-color: var(--warn); }
+.pal header { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.num { font-family: var(--f-display); font-weight: 700; font-size: 38px; letter-spacing: .04em; line-height: 1; }
+.num small { font-size: 14px; font-weight: 600; color: var(--ink2); margin-right: 4px; letter-spacing: .1em; }
+.bar { height: 10px; border-radius: 2px; background: var(--surface2); border: 1px solid var(--line); overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--cheese); }
+.pal .big { font-size: 13px; color: var(--ink2); }
+.pal .big b { font-family: var(--f-display); font-size: 28px; color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; margin-right: 2px; }
+.pal .kg { font-family: var(--f-mono); font-size: 13px; font-variant-numeric: tabular-nums; }
+.pal footer { color: var(--ink2); font-size: 12px; border-top: 1px dashed var(--line); padding-top: 8px; }
+.hold { font-size: 12px; color: var(--accent); }
+.al { font-size: 12px; padding: 4px 8px; border-radius: 4px; }
+.al.warn { background: var(--warn-bg); color: var(--warn); }
+.al.bad { background: var(--bad-bg); color: var(--bad); }
+.chip { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; font-weight: 600; padding: 2px 8px; border-radius: 99px; white-space: nowrap; }
+.chip.ok { background: var(--ok-bg); color: var(--ok); }
+.chip.warn { background: var(--warn-bg); color: var(--warn); }
+.chip.bad { background: var(--bad-bg); color: var(--bad); }
+.chip.info { background: var(--info-bg); color: var(--accent); }
+.chip.muted { background: var(--surface2); color: var(--ink2); border: 1px solid var(--line); }
+
+.empty { background: var(--surface); border: 1px dashed var(--line); border-radius: 6px; padding: 32px 20px; display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+.empty h3 { font-family: var(--f-display); font-size: 24px; text-transform: uppercase; letter-spacing: .03em; font-weight: 600; }
+
+/* tablas */
+.tw { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 620px; }
+th { text-align: left; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink2); font-weight: 600; padding: 9px 12px; background: var(--surface2); border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+td.n, th.n { text-align: right; font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+td input, td select { padding: 5px 8px; }
+td .kin { width: 96px; text-align: right; font-family: var(--f-mono); }
+td .hint { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+tr.done td { color: var(--ink2); }
+tfoot td { font-weight: 600; background: var(--surface2); }
+
+.drop { border: 2px dashed var(--line); border-radius: 6px; padding: 32px 20px; text-align: center; cursor: pointer; display: flex; flex-direction: column; gap: 6px; align-items: center; background: var(--surface); }
+.drop:hover, .drop.over { border-color: var(--accent); background: var(--info-bg); }
+.drop b { font-family: var(--f-display); font-size: 22px; text-transform: uppercase; letter-spacing: .04em; }
+.visually { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.checks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.checks li { display: flex; gap: 10px; align-items: flex-start; }
+.checks .dot { margin-top: 5px; }
+.checks .dot.ok { background: var(--ok); }
+.checks .dot.info { background: var(--accent); }
+details.panel summary { cursor: pointer; font-family: var(--f-display); font-size: 20px; text-transform: uppercase; letter-spacing: .04em; font-weight: 600; }
+.pgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-top: 14px; }
+.pedhead { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; }
+.pedhead h3 { margin-right: auto; }
+.toast { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: flex; justify-content: center; pointer-events: none; padding: 12px max(16px, env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.toast div { background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 6px; max-width: 560px; box-shadow: 0 6px 24px rgba(0,0,0,.25); }
+.toast.bad div { background: var(--bad); color: #fff; }
+.clis { list-style: none; margin: 0; padding: 8px 0 0; border-top: 1px dashed var(--line); display: flex; flex-direction: column; gap: 3px; font-size: 12px; }
+.clis li { display: flex; justify-content: space-between; gap: 8px; }
+.clis li span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.clis li b { font-family: var(--f-mono); font-weight: 500; white-space: nowrap; }
+.clis .more { color: var(--ink2); }
+.gate { position: fixed; inset: 0; z-index: 50; background: var(--bg); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.gatebox { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 24px; max-width: 360px; width: 100%; display: flex; flex-direction: column; gap: 14px; }
+.gatebox h2 { font-family: var(--f-display); font-size: 28px; text-transform: uppercase; letter-spacing: .04em; margin: 0; }
+.gatemsg { color: var(--bad); min-height: 1.2em; margin: 0; }
+.acts { display: flex; gap: 6px; flex-wrap: wrap; }
+@media (prefers-reduced-motion: no-preference) { .bar i { transition: width .25s ease; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><h1 class="stencil">Palets</h1><span class="brandsub">Barra Danbo · Tremblay en NOR</span></div>
+    <nav class="tabs" id="tabs" role="tablist" aria-label="Secciones"></nav>
+  </header>
+  <main id="view"><p class="muted">Cargando…</p></main>
+</div>
+<div class="toast" id="toast" role="status" hidden><div></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+window.PALETS_CONFIG = { API_URL: 'PEGAR-AQUI-LA-URL-DE-APPS-SCRIPT' };
+</script>
+<script>
+(function () {
+  'use strict';
+  var COLS = ['palets', 'salidas', 'remitos', 'pedidos', 'config'];
+  var cache = {}, subs = {}, rev = null, loaded = false, loading = false, pending = 0, started = false;
+  COLS.forEach(function (c) { cache[c] = {}; subs[c] = []; });
+
+  function clone(x) { return x === undefined ? undefined : JSON.parse(JSON.stringify(x)); }
+  function stable(x) {
+    if (x === null || typeof x !== 'object') return JSON.stringify(x);
+    if (Array.isArray(x)) return '[' + x.map(stable).join(',') + ']';
+    return '{' + Object.keys(x).sort().map(function (k) { return JSON.stringify(k) + ':' + stable(x[k]); }).join(',') + '}';
+  }
+  function newId() { return 'x' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+  var CFG = window.PALETS_CONFIG || {};
+  var clave = '', prefetched = null, accessP = null;
+  function readClave() { try { return localStorage.getItem('palets_clave') || ''; } catch (e) { return ''; } }
+  function saveClave(v) { try { localStorage.setItem('palets_clave', v); } catch (e) {} }
+  function forgetClave() { try { localStorage.removeItem('palets_clave'); } catch (e) {} }
+  function api(payload) {
+    payload.clave = clave;
+    return fetch(CFG.API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (j && j.ok) return j.result;
+        var e = (j && j.error) || 'error';
+        throw { code: e === 'clave' ? 'clave' : 'unavailable', message: e };
+      }, function (e) {
+        throw { code: 'unavailable', message: String((e && e.message) || e) };
+      });
+  }
+  function run(fn, args) {
+    if (fn === 'getAll') {
+      if (prefetched && !args[0]) { var p = prefetched; prefetched = null; return Promise.resolve(p); }
+      return api({ action: 'getAll', rev: args[0] });
+    }
+    return api({ action: 'writeDoc', col: args[0], id: args[1], op: args[2], data: args[3] });
+  }
+  function hideGate() { var g = document.getElementById('gate'); if (g) { g.hidden = true; g.innerHTML = ''; } }
+  function showGate(msg, attempt, fatal) {
+    var g = document.getElementById('gate');
+    if (!g) { g = document.createElement('div'); g.id = 'gate'; g.className = 'gate'; document.body.appendChild(g); }
+    g.hidden = false;
+    g.innerHTML = '<form class="gatebox" id="gate-form"><h2>Palets Barra Danbo</h2>' +
+      (fatal ? '' : '<p class="muted">Ingresá la clave de acceso.</p><div class="field"><label for="gate-clave">Clave</label><input type="password" id="gate-clave" autocomplete="current-password"></div>') +
+      '<p class="gatemsg" role="alert"></p>' + (fatal ? '' : '<button class="btn" type="submit">Entrar</button>') + '</form>';
+    g.querySelector('.gatemsg').textContent = msg || '';
+    if (fatal) return;
+    var f = g.querySelector('#gate-form');
+    f.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var v = g.querySelector('#gate-clave').value;
+      if (!v) return;
+      var btn = f.querySelector('button'); btn.disabled = true;
+      attempt(v, true);
+    });
+    setTimeout(function () { var i = g.querySelector('#gate-clave'); if (i) i.focus(); }, 0);
+  }
+  function ensureAccess() {
+    if (accessP) return accessP;
+    accessP = new Promise(function (resolve, reject) {
+      if (!CFG.API_URL || String(CFG.API_URL).indexOf('http') !== 0) {
+        showGate('Falta configurar la dirección del servidor en la página.', null, true);
+        reject({ code: 'unavailable' });
+        return;
+      }
+      function attempt(c, fromUi) {
+        clave = c;
+        return api({ action: 'getAll', rev: null }).then(function (res) {
+          prefetched = res; saveClave(c); hideGate(); resolve();
+        }, function (e) {
+          if (e.code === 'clave') { forgetClave(); showGate(fromUi ? 'Clave incorrecta. Probá de nuevo.' : '', attempt); }
+          else showGate('No se pudo conectar con el servidor. ' + (e.message || ''), attempt);
+        });
+      }
+      var saved = readClave();
+      if (saved) attempt(saved, false); else showGate('', attempt);
+    });
+    return accessP;
+  }
+  var META = { fromCache: false, hasPendingWrites: false };
+  function docSnap(c, id) {
+    var d = cache[c][id];
+    return { id: id, exists: !!d, data: function () { return d; }, metadata: META };
+  }
+  function querySnap(c) {
+    var docs = Object.keys(cache[c]).sort().map(function (id) { return docSnap(c, id); });
+    return { docs: docs, size: docs.length, empty: !docs.length, docChanges: function () { return []; }, metadata: META };
+  }
+  function emit(c) { subs[c].slice().forEach(function (s) { try { s.fire(); } catch (e) { console.error(e); } }); }
+
+  function load() {
+    if (loading || pending > 0) return Promise.resolve();
+    loading = true;
+    return run('getAll', [rev]).then(function (res) {
+      loading = false;
+      if (pending > 0) return;
+      var first = !loaded;
+      if (!res.unchanged) {
+        rev = res.rev;
+        COLS.forEach(function (c) {
+          var next = (res.data && res.data[c]) || {};
+          if (stable(next) !== stable(cache[c])) { cache[c] = next; if (!first) emit(c); }
+        });
+      }
+      if (first) { loaded = true; COLS.forEach(emit); }
+    }, function (e) {
+      loading = false;
+      console.error(e);
+      if (!loaded) {
+        COLS.forEach(function (c) { subs[c].slice().forEach(function (s) { if (s.err) s.err({ code: 'unavailable', message: e.message }); }); });
+      }
+    });
+  }
+  function start() {
+    if (started) return;
+    started = true;
+    load();
+    setInterval(function () { if (!document.hidden) load(); }, 7000);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) load(); });
+  }
+  function subscribe(c, id, next, error) {
+    var s = {
+      err: error,
+      fire: function () { next(id === null ? querySnap(c) : docSnap(c, id)); }
+    };
+    subs[c].push(s);
+    if (loaded) setTimeout(function () { if (subs[c].indexOf(s) >= 0) s.fire(); }, 0);
+    start();
+    return function () { var i = subs[c].indexOf(s); if (i >= 0) subs[c].splice(i, 1); };
+  }
+  function mutate(c, id, op, data) {
+    if (op === 'update' && !cache[c][id]) return Promise.reject({ code: 'invalid_argument', message: 'El documento no existe' });
+    if (op === 'delete') delete cache[c][id];
+    else if (op === 'set') cache[c][id] = clone(data);
+    else { var n = clone(cache[c][id]); Object.keys(data).forEach(function (k) { n[k] = clone(data[k]); }); cache[c][id] = n; }
+    emit(c);
+    pending++;
+    return run('writeDoc', [c, id, op, JSON.stringify(op === 'delete' ? {} : data)]).then(
+      function () { pending--; },
+      function (e) { pending--; rev = null; load(); throw e; }
+    );
+  }
+  function docRef(c, id) {
+    return {
+      id: id, path: c + '/' + id,
+      get: function () { return Promise.resolve(docSnap(c, id)); },
+      set: function (d) { return mutate(c, id, 'set', d); },
+      update: function (d) { return mutate(c, id, 'update', d); },
+      delete: function () { return mutate(c, id, 'delete'); },
+      onSnapshot: function (next, error) { return subscribe(c, id, next, error); }
+    };
+  }
+  var db = {
+    collection: function (c) {
+      if (!cache[c]) throw new TypeError('Colección desconocida: ' + c);
+      return {
+        path: c,
+        doc: function (id) { return docRef(c, id || newId()); },
+        get: function () { return Promise.resolve(querySnap(c)); },
+        onSnapshot: function (next, error) { return subscribe(c, null, next, error); }
+      };
+    },
+    doc: function (path) {
+      var p = String(path).split('/');
+      if (!cache[p[0]] || !p[1]) throw new TypeError('Ruta inválida: ' + path);
+      return docRef(p[0], p[1]);
+    }
+  };
+  var downloads = {
+    save: function (req) {
+      return new Promise(function (resolve, reject) {
+        try {
+          var blob = new Blob([req.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+          var a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = req.filename;
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+          resolve({ status: 'saved' });
+        } catch (e) { reject({ code: 'unavailable', message: String(e) }); }
+      });
+    }
+  };
+  window.claude = { use: function (name) {
+    if (name === 'db') return ensureAccess().then(function () { return db; }, function () { return null; });
+    if (name === 'downloads') return Promise.resolve(downloads);
+    return Promise.resolve(null);
+  } };
+})();
+</script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (s) { return document.querySelector(s); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var DEF = { cajasPalet: 81, unidCaja: 3, kgCaja: 9.6, tolKg: 10, difKilos: 1 };
+  var TABS = [['tablero', 'Tablero'], ['ingreso', 'Ingreso'], ['pedido', 'Pedido Tremblay'], ['historial', 'Historial']];
+
+  var state = {
+    palets: [], salidas: [], remitos: [], pedidos: [], params: Object.assign({}, DEF),
+    loaded: {}, db: null, dl: null, error: null,
+    tab: 'tablero', filtro: 'saldo', q: '', hq: '', allAlerts: false, paramsOpen: false,
+    ing: newIng(), imp: null, editPalet: null, histView: 'salida', confirmDel: null, pending: false, D: null
+  };
+
+  /* ---------- utilidades ---------- */
+  function today() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function fdate(iso) { if (!iso) return '—'; var p = String(iso).split('-'); return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : String(iso); }
+  function fmtN(n, d) { if (n === null || n === undefined || isNaN(n)) return '—'; return Number(n).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: d || 0 }); }
+  function fmtKg(n) { return (n === null || n === undefined || isNaN(n)) ? '—' : Number(n).toLocaleString('es-AR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' kg'; }
+  function parseNum(v) {
+    if (v === null || v === undefined || v === '') return null;
+    if (typeof v === 'number') return isFinite(v) ? v : null;
+    var s = String(v).trim().replace(/\s/g, '');
+    if (!s) return null;
+    if (s.indexOf(',') >= 0 && s.indexOf('.') >= 0) s = s.replace(/\./g, '').replace(',', '.');
+    else if (s.indexOf(',') >= 0) s = s.replace(',', '.');
+    var n = Number(s);
+    return isFinite(n) ? n : null;
+  }
+  function cmpNum(a, b) {
+    var x = Number(a), y = Number(b);
+    if (!isNaN(x) && !isNaN(y) && x !== y) return x - y;
+    return String(a).localeCompare(String(b), 'es', { numeric: true });
+  }
+  function toast(msg, kind) {
+    var t = $('#toast');
+    t.className = 'toast ' + (kind || '');
+    t.firstElementChild.textContent = msg;
+    t.hidden = false;
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function () { t.hidden = true; }, kind === 'bad' ? 7000 : 3500);
+  }
+  var qs = {};
+  function queue(key, fn) {
+    var prev = qs[key] || Promise.resolve();
+    var next = prev.catch(function () {}).then(fn);
+    qs[key] = next;
+    return next;
+  }
+  function safe(fn, msg) {
+    return Promise.resolve().then(fn).catch(function (e) {
+      console.error(e);
+      var extra = e && e.code === 'invalid_argument' ? ' Puede que tu acceso sea de solo lectura.' : '';
+      toast((msg || 'No se pudo guardar.') + extra, 'bad');
+      return null;
+    });
+  }
+  function newIng() { return { remito: '', fecha: today(), cant: '', kilos: '', nums: '', kgTodos: '', rows: null }; }
+
+  /* ---------- cálculo ---------- */
+  function salAlerts(s, P) {
+    var out = [];
+    var cajas = Number(s.cajas) || 0, uni = Number(s.unidades) || 0, kg = Number(s.kilos) || 0;
+    if (Math.abs(uni - cajas * P.unidCaja) > 0.001) out.push('Unidades no coinciden con cajas × ' + P.unidCaja);
+    if (cajas > 0 && kg > 0) {
+      var pc = kg / cajas;
+      if (Math.abs(pc - P.kgCaja) > P.kgCaja * (P.tolKg / 100)) out.push(fmtN(pc, 1) + ' kg por caja, fuera de lo esperado (~' + fmtN(P.kgCaja, 1) + ')');
+    }
+    return out;
+  }
+  function derive() {
+    var P = state.params, byId = {}, alerts = [], rows = [];
+    state.palets.forEach(function (p) { byId[p.id] = { cajasSal: 0, kilosSal: 0, comp: 0 }; });
+    state.salidas.forEach(function (s) {
+      var b = byId[s.paletId];
+      if (b) { b.cajasSal += Number(s.cajas) || 0; b.kilosSal += Number(s.kilos) || 0; }
+      else alerts.push({ n: 'warn', t: 'Salida a ' + (s.cliente || '—') + ' del palet ' + (s.paletNum || '?') + ': ese palet no está cargado.' });
+      salAlerts(s, P).forEach(function (t) { alerts.push({ n: 'warn', t: (s.cliente || '—') + ' (palet ' + (s.paletNum || '?') + ', ' + fdate(s.fecha) + '): ' + t }); });
+    });
+    var sinPalet = 0;
+    state.pedidos.forEach(function (ped) {
+      if (ped.estado === 'pesado') return;
+      (ped.lineas || []).forEach(function (l) {
+        if (l.confirmada) return;
+        var b = byId[l.paletId];
+        if (b) b.comp += Number(l.cajas) || 0; else sinPalet++;
+      });
+    });
+    if (sinPalet) alerts.push({ n: 'warn', t: sinPalet + ' línea(s) de pedidos pendientes sin palet asignado.' });
+    var T = { conSaldo: 0, cajas: 0, unidades: 0, kilos: 0, kilosN: 0, sinKilos: 0, comp: 0, kilosDesp: 0, cajasDesp: 0, unidDesp: 0 };
+    state.salidas.forEach(function (s) { T.kilosDesp += Number(s.kilos) || 0; T.cajasDesp += Number(s.cajas) || 0; T.unidDesp += Number(s.unidades) || 0; });
+    state.palets.forEach(function (p) {
+      var b = byId[p.id], ini = Number(p.cajas) || P.cajasPalet, saldo = ini - b.cajasSal;
+      var kIng = (p.kilosIngreso === null || p.kilosIngreso === undefined) ? null : Number(p.kilosIngreso);
+      var kSaldo = kIng === null ? null : kIng - b.kilosSal;
+      var estado = saldo < 0 ? 'negativo' : saldo === 0 ? 'cerrado' : b.cajasSal === 0 ? 'sin' : 'abierto';
+      var al = [];
+      if (saldo < 0) al.push({ n: 'bad', t: 'Salieron más cajas de las que tenía (' + fmtN(-saldo) + ' de más).' });
+      if (kIng !== null && kSaldo < -P.difKilos) al.push({ n: 'bad', t: 'Kilos pesados superan el ingreso en ' + fmtKg(-kSaldo) + '.' });
+      if (saldo === 0 && kIng !== null && Math.abs(kSaldo) > P.difKilos) al.push({ n: 'warn', t: 'Despachado con ' + fmtKg(Math.abs(kSaldo)) + ' de diferencia en kilos.' });
+      if (b.comp > saldo + 1e-9 && saldo >= 0) al.push({ n: 'warn', t: 'Los pedidos pendientes piden ' + fmtN(b.comp) + ' cajas y quedan ' + fmtN(saldo) + '.' });
+      al.forEach(function (a) { alerts.push({ n: a.n, t: 'Palet ' + p.num + ': ' + a.t }); });
+      rows.push({ p: p, ini: ini, saldo: saldo, kIng: kIng, kSaldo: kSaldo, comp: b.comp, estado: estado, alerts: al, cajasSal: b.cajasSal });
+      if (saldo > 0) {
+        T.conSaldo++; T.cajas += saldo; T.unidades += saldo * P.unidCaja; T.comp += b.comp;
+        if (kSaldo !== null) { T.kilos += kSaldo; T.kilosN++; } else T.sinKilos++;
+      }
+    });
+    state.remitos.forEach(function (r) {
+      var mine = state.palets.filter(function (p) { return String(p.remito) === String(r.remito); });
+      var decl = Number(r.palets) || 0;
+      if (decl && mine.length !== decl) alerts.push({ n: 'warn', t: 'Remito ' + r.remito + ': dice ' + decl + ' palets y hay ' + mine.length + ' cargados.' });
+      var conK = mine.filter(function (p) { return p.kilosIngreso !== null && p.kilosIngreso !== undefined; });
+      if (r.kilos != null && conK.length) {
+        var sum = conK.reduce(function (a, p) { return a + Number(p.kilosIngreso); }, 0);
+        if (Math.abs(sum - Number(r.kilos)) > P.difKilos) alerts.push({ n: 'warn', t: 'Remito ' + r.remito + ': los palets suman ' + fmtKg(sum) + ' y el remito dice ' + fmtKg(Number(r.kilos)) + '.' });
+      }
+    });
+    alerts.sort(function (a, b) { return (a.n === 'bad' ? 0 : 1) - (b.n === 'bad' ? 0 : 1); });
+    return { rows: rows, alerts: alerts, totals: T };
+  }
+
+  /* ---------- Excel de Tremblay ---------- */
+  var KEYS = {
+    cliente: /cliente|raz[oó]n|destinatario|nombre/i,
+    palet: /pal{1,2}e?t/i,
+    unidades: /unid|barra/i,
+    cajas: /caja|bulto/i,
+    kilos: /kilo|\bkg\b/i,
+    producto: /producto|art[ií]culo|descrip|detalle/i
+  };
+  function autoHeader(rows) {
+    for (var i = 0; i < Math.min(rows.length, 25); i++) {
+      var cells = rows[i].map(function (c) { return String(c == null ? '' : c).trim(); });
+      var txt = cells.filter(function (c) { return c && parseNum(c) === null; });
+      if (txt.length >= 2 && cells.some(function (c) { return /cliente|raz|nombre|pal{1,2}e?t|unid|caja|kilo/i.test(c); })) return i;
+    }
+    return 0;
+  }
+  function autoMap(head) {
+    var map = { cliente: -1, palet: -1, unidades: -1, cajas: -1, kilos: -1, producto: -1 }, used = {};
+    ['cliente', 'palet', 'cajas', 'unidades', 'kilos', 'producto'].forEach(function (k) {
+      for (var i = 0; i < (head || []).length; i++) {
+        if (used[i]) continue;
+        if (KEYS[k].test(String(head[i] == null ? '' : head[i]))) { map[k] = i; used[i] = true; break; }
+      }
+    });
+    return map;
+  }
+  function initSheet() {
+    var imp = state.imp, rows = imp.sheets[imp.sheet] || [];
+    imp.headerRow = autoHeader(rows);
+    imp.map = autoMap(rows[imp.headerRow]);
+  }
+  function loadFile(file) {
+    if (typeof XLSX === 'undefined') { toast('No se pudo cargar el lector de Excel. Recargá la página.', 'bad'); return; }
+    file.arrayBuffer().then(function (buf) {
+      var wb = XLSX.read(buf, { type: 'array' }), sheets = {};
+      wb.SheetNames.forEach(function (n) { sheets[n] = XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, raw: true, defval: '' }); });
+      var names = wb.SheetNames.filter(function (n) { return sheets[n].length; });
+      if (!names.length) throw new Error('vacio');
+      var pref = names.filter(function (n) { return /danbo/i.test(n); })[0] || names[0];
+      state.imp = { fileName: file.name, sheets: sheets, names: names, sheet: pref, fechaPedido: today(), filtro: '', headerRow: 0, map: {} };
+      initSheet();
+      state.tab = 'pedido';
+      render();
+    }).catch(function () { toast('No pude leer ese archivo. ¿Es un Excel (.xlsx)?', 'bad'); });
+  }
+  function buildLines() {
+    var imp = state.imp, P = state.params;
+    if (!imp) return [];
+    var rows = imp.sheets[imp.sheet] || [], m = imp.map, out = [];
+    var D = state.D || derive();
+    for (var r = imp.headerRow + 1; r < rows.length; r++) {
+      var row = rows[r];
+      var cli = m.cliente >= 0 ? String(row[m.cliente] == null ? '' : row[m.cliente]).trim() : '';
+      var caj = m.cajas >= 0 ? parseNum(row[m.cajas]) : null;
+      var uni = m.unidades >= 0 ? parseNum(row[m.unidades]) : null;
+      var kg = m.kilos >= 0 ? parseNum(row[m.kilos]) : null;
+      var pal = m.palet >= 0 ? String(row[m.palet] == null ? '' : row[m.palet]).trim() : '';
+      if (!cli && caj === null && uni === null) continue;
+      if (m.producto >= 0 && imp.filtro && imp.filtro.trim()) {
+        var prod = String(row[m.producto] == null ? '' : row[m.producto]);
+        if (prod.toLowerCase().indexOf(imp.filtro.trim().toLowerCase()) < 0) continue;
+      }
+      var nota = '';
+      if (caj === null && uni !== null) caj = uni / P.unidCaja;
+      if (uni === null && caj !== null) uni = caj * P.unidCaja;
+      if (caj === null && kg !== null && kg > 0) { caj = Math.round(kg / P.kgCaja); uni = caj * P.unidCaja; nota = 'Cajas estimadas por kilos'; }
+      if (caj === null) continue;
+      var paletId = null, paletNum = '', fijoSin = false;
+      if (pal) {
+        var cands = D.rows.filter(function (x) { return String(x.p.num) === pal; });
+        var best = cands.filter(function (x) { return x.saldo > 0; })[0] || cands[0];
+        if (best) { paletId = best.p.id; paletNum = best.p.num; }
+        else { paletNum = pal; fijoSin = true; nota = 'Palet no cargado'; }
+      }
+      out.push({ cliente: cli, cajas: caj, unidades: uni, kilos: null, paletId: paletId, paletNum: paletNum, confirmada: false, salidaId: null, sugerido: false, nota: nota, fijoSin: fijoSin, paletTexto: pal });
+    }
+    return out;
+  }
+  function sugerir(lines) {
+    var D = derive(), P = state.params, avail = {}, out = [];
+    D.rows.forEach(function (r) { avail[r.p.id] = r.saldo - r.comp; });
+    var order = D.rows.filter(function (r) { return r.saldo > 0; }).sort(function (a, b) {
+      var pa = a.saldo < a.ini ? 0 : 1, pb = b.saldo < b.ini ? 0 : 1;
+      return pa - pb || String(a.p.fecha).localeCompare(String(b.p.fecha)) || cmpNum(a.p.num, b.p.num);
+    });
+    lines.forEach(function (l) { if (l.paletId) avail[l.paletId] = (avail[l.paletId] || 0) - l.cajas; });
+    lines.forEach(function (l) {
+      if (l.paletId || l.fijoSin) { out.push(l); return; }
+      var need = l.cajas;
+      if (need <= 0) { out.push(Object.assign({}, l, { nota: 'Sin cajas' })); return; }
+      var whole = order.filter(function (r) { return avail[r.p.id] >= need; })[0];
+      if (whole) { avail[whole.p.id] -= need; out.push(Object.assign({}, l, { paletId: whole.p.id, paletNum: whole.p.num, sugerido: true })); return; }
+      order.forEach(function (r) {
+        if (need <= 0) return;
+        var a = avail[r.p.id];
+        if (a > 0) {
+          var take = Math.min(a, need);
+          avail[r.p.id] -= take; need -= take;
+          out.push(Object.assign({}, l, { cajas: take, unidades: take * P.unidCaja, paletId: r.p.id, paletNum: r.p.num, sugerido: true, nota: 'Dividida entre palets' }));
+        }
+      });
+      if (need > 0) out.push(Object.assign({}, l, { cajas: need, unidades: need * P.unidCaja, paletId: null, paletNum: '', nota: 'No alcanza el stock' }));
+    });
+    return out.map(function (l, i) { var c = Object.assign({}, l, { id: 'l' + i }); delete c.fijoSin; return c; });
+  }
+
+  /* ---------- escritura ---------- */
+  function armarPedido() {
+    var lines = buildLines();
+    if (!lines.length) { toast('No hay líneas para cargar. Revisá las columnas elegidas.', 'bad'); return; }
+    var asign = sugerir(lines), imp = state.imp;
+    return safe(function () {
+      var ref = state.db.collection('pedidos').doc();
+      return ref.set({ creado: new Date().toISOString(), fecha: imp.fechaPedido || today(), archivo: imp.fileName, hoja: imp.sheet, estado: 'pendiente', lineas: asign }).then(function () {
+        state.imp = null;
+        toast('Pedido armado: ' + asign.length + ' líneas listas para pesar.');
+        render();
+      });
+    }, 'No se pudo guardar el pedido.');
+  }
+  function updLinea(pedId, i, patch) {
+    var ped = state.pedidos.filter(function (p) { return p.id === pedId; })[0];
+    if (!ped) return;
+    ped.lineas = ped.lineas.map(function (l, k) { return k === i ? Object.assign({}, l, patch) : l; });
+    var lineas = ped.lineas;
+    return queue('ped' + pedId, function () { return safe(function () { return state.db.doc('pedidos/' + pedId).update({ lineas: lineas }); }); });
+  }
+  function confirmar(pedId, idxs) {
+    var ped = state.pedidos.filter(function (p) { return p.id === pedId; })[0];
+    if (!ped) return;
+    return queue('ped' + pedId, function () {
+      var D = derive(), saldo = {}, ok = 0, errs = [];
+      D.rows.forEach(function (r) { saldo[r.p.id] = r.saldo; });
+      var chain = Promise.resolve();
+      idxs.forEach(function (i) {
+        chain = chain.then(function () {
+          var l = ped.lineas[i];
+          if (!l || l.confirmada) return;
+          var kg = parseNum(l.kilos);
+          if (!(kg > 0)) { errs.push('Línea ' + (i + 1) + ': falta el peso.'); return; }
+          if (!l.paletId || saldo[l.paletId] === undefined) { errs.push('Línea ' + (i + 1) + ': elegí un palet.'); return; }
+          if (saldo[l.paletId] < l.cajas - 1e-9) { errs.push('Palet ' + l.paletNum + ': quedan ' + fmtN(saldo[l.paletId]) + ' cajas y la línea pide ' + fmtN(l.cajas) + '.'); return; }
+          var ref = state.db.collection('salidas').doc();
+          return ref.set({ creado: new Date().toISOString(), fecha: ped.fecha, paletId: l.paletId, paletNum: l.paletNum, cliente: l.cliente, cajas: l.cajas, unidades: l.unidades, kilos: kg, pedidoId: ped.id, lineaId: l.id }).then(function () {
+            saldo[l.paletId] -= l.cajas;
+            ped.lineas = ped.lineas.map(function (x, k) { return k === i ? Object.assign({}, x, { confirmada: true, salidaId: ref.id, kilos: kg }) : x; });
+            ped.estado = ped.lineas.every(function (x) { return x.confirmada; }) ? 'pesado' : 'pendiente';
+            return state.db.doc('pedidos/' + ped.id).update({ lineas: ped.lineas, estado: ped.estado }).then(function () { ok++; });
+          });
+        });
+      });
+      return chain.then(function () {
+        if (ok) toast(ok + (ok === 1 ? ' pesada cargada.' : ' pesadas cargadas.') + (errs.length ? ' ' + errs.length + ' con problemas.' : ''), errs.length ? 'bad' : '');
+        if (errs.length) toast(errs.slice(0, 3).join(' '), 'bad');
+        render();
+      }).catch(function (e) { console.error(e); toast('No se pudo guardar la pesada.' + (e && e.code === 'invalid_argument' ? ' Puede que tu acceso sea de solo lectura.' : ''), 'bad'); render(); });
+    });
+  }
+  function anularSalida(id) {
+    var s = state.salidas.filter(function (x) { return x.id === id; })[0];
+    if (!s) return;
+    return queue('sal' + id, function () {
+      return safe(function () {
+        return state.db.doc('salidas/' + id).delete().then(function () {
+          var ped = s.pedidoId && state.pedidos.filter(function (p) { return p.id === s.pedidoId; })[0];
+          if (!ped) return;
+          ped.lineas = ped.lineas.map(function (l) { return l.id === s.lineaId ? Object.assign({}, l, { confirmada: false, salidaId: null }) : l; });
+          ped.estado = 'pendiente';
+          return state.db.doc('pedidos/' + ped.id).update({ lineas: ped.lineas, estado: 'pendiente' });
+        }).then(function () { toast('Salida anulada. La línea volvió al pedido.'); });
+      }, 'No se pudo anular.');
+    });
+  }
+  function borrarPedido(id) {
+    var ped = state.pedidos.filter(function (p) { return p.id === id; })[0];
+    if (!ped) return;
+    if ((ped.lineas || []).some(function (l) { return l.confirmada; })) { toast('Ese pedido tiene pesadas cargadas. Anulá primero esas salidas en Historial.', 'bad'); return; }
+    return safe(function () { return state.db.doc('pedidos/' + id).delete().then(function () { toast('Pedido eliminado.'); }); }, 'No se pudo eliminar.');
+  }
+  function guardarIngreso() {
+    var ing = state.ing, P = state.params;
+    if (!ing.rows || !ing.rows.length) return;
+    var chk = ingChecks();
+    if (chk.some(function (c) { return c.k === 'bad'; })) { toast('Corregí los errores marcados antes de guardar.', 'bad'); return; }
+    var remito = ing.remito.trim();
+    var btn = $('[data-act="ing-guardar"]'); if (btn) btn.disabled = true;
+    return safe(function () {
+      var kr = parseNum(ing.kilos), cant = parseNum(ing.cant);
+      return state.db.collection('remitos').doc().set({ creado: new Date().toISOString(), remito: remito, fecha: ing.fecha || today(), palets: cant != null ? cant : ing.rows.length, kilos: kr }).then(function () {
+        var chain = Promise.resolve();
+        ing.rows.forEach(function (r) {
+          chain = chain.then(function () {
+            return state.db.collection('palets').doc().set({ creado: new Date().toISOString(), num: String(r.num), remito: remito, fecha: ing.fecha || today(), kilosIngreso: parseNum(r.kilos), cajas: P.cajasPalet });
+          });
+        });
+        return chain;
+      }).then(function () {
+        toast('Ingreso guardado: ' + ing.rows.length + ' palets del remito ' + remito + '.');
+        state.ing = newIng();
+        state.tab = 'tablero';
+        render();
+      });
+    }, 'No se pudo guardar el ingreso. Si se guardaron algunos palets, revisalos en el Tablero antes de repetir.').then(function () { var b = $('[data-act="ing-guardar"]'); if (b) b.disabled = false; });
+  }
+  function guardarPalet(id) {
+    var p = state.palets.filter(function (x) { return x.id === id; })[0];
+    if (!p) return;
+    var num = ($('#ed-num').value || '').trim(), remito = ($('#ed-remito').value || '').trim();
+    var kgTxt = ($('#ed-kg').value || '').trim(), kg = kgTxt === '' ? null : parseNum(kgTxt);
+    var cajas = parseNum($('#ed-cajas').value);
+    if (!num) { toast('El palet necesita un número.', 'bad'); return; }
+    if (kgTxt !== '' && (kg === null || kg < 0)) { toast('Los kilos no son un número válido.', 'bad'); return; }
+    if (cajas === null || cajas <= 0 || Math.floor(cajas) !== cajas) { toast('Las cajas tienen que ser un número entero mayor a 0.', 'bad'); return; }
+    var dup = (state.D ? state.D.rows : []).some(function (x) { return x.p.id !== id && String(x.p.num) === num && x.saldo > 0; });
+    if (dup) { toast('Ya hay otro palet en depósito con el número ' + num + '.', 'bad'); return; }
+    return safe(function () {
+      var chain = state.db.doc('palets/' + id).update({ num: num, remito: remito, kilosIngreso: kg, cajas: cajas });
+      if (num !== String(p.num)) {
+        state.salidas.filter(function (s) { return s.paletId === id; }).forEach(function (s) {
+          chain = chain.then(function () { return state.db.doc('salidas/' + s.id).update({ paletNum: num }); });
+        });
+        state.pedidos.forEach(function (ped) {
+          if (!(ped.lineas || []).some(function (l) { return l.paletId === id; })) return;
+          var ls = ped.lineas.map(function (l) { return l.paletId === id ? Object.assign({}, l, { paletNum: num }) : l; });
+          chain = chain.then(function () { return state.db.doc('pedidos/' + ped.id).update({ lineas: ls }); });
+        });
+      }
+      return chain.then(function () { state.editPalet = null; toast('Palet ' + num + ' actualizado.'); render(); });
+    }, 'No se pudo guardar el palet.');
+  }
+  function borrarPalet(id) {
+    var p = state.palets.filter(function (x) { return x.id === id; })[0];
+    if (!p) return;
+    if (state.salidas.some(function (s) { return s.paletId === id; })) { toast('Ese palet tiene salidas pesadas. Anulá primero esas salidas en Historial.', 'bad'); return; }
+    return safe(function () { return state.db.doc('palets/' + id).delete().then(function () { toast('Palet ' + p.num + ' eliminado.'); }); }, 'No se pudo eliminar el palet.');
+  }
+  function exportar(aoa, filename, sheet, widths) {
+    if (!state.dl) return;
+    if (typeof XLSX === 'undefined') { toast('No se pudo cargar el generador de Excel.', 'bad'); return; }
+    try {
+      var wb = XLSX.utils.book_new(), ws = XLSX.utils.aoa_to_sheet(aoa);
+      ws['!cols'] = widths.map(function (w) { return { wch: w }; });
+      XLSX.utils.book_append_sheet(wb, ws, sheet);
+      var buf = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
+      state.dl.save({ filename: filename, data: new Uint8Array(buf) }).then(function () { toast('Archivo listo.'); }).catch(function (e) { if (e && e.code === 'declined') return; toast('No se pudo guardar el archivo.', 'bad'); });
+    } catch (e) { console.error(e); toast('No se pudo generar el archivo.', 'bad'); }
+  }
+  function exportPedido(id) {
+    var ped = state.pedidos.filter(function (p) { return p.id === id; })[0];
+    if (!ped) return;
+    var rows = [['Fecha', 'Cliente', 'Palet', 'Cajas', 'Unidades', 'Kilos']], tc = 0, tu = 0, tk = 0;
+    (ped.lineas || []).forEach(function (l) {
+      var kg = parseNum(l.kilos);
+      if (!(kg > 0)) return;
+      rows.push([fdate(ped.fecha), l.cliente, l.paletNum, l.cajas, l.unidades, kg]);
+      tc += l.cajas; tu += l.unidades; tk += kg;
+    });
+    if (rows.length === 1) { toast('Todavía no hay kilos pesados en este pedido.', 'bad'); return; }
+    rows.push(['', 'TOTAL', '', tc, tu, tk]);
+    var p = String(ped.fecha || today()).split('-');
+    exportar(rows, 'KILOS BARRA DANBO ' + p[2] + '-' + Number(p[1]) + '.xlsx', 'Kilos', [12, 48, 10, 8, 10, 12]);
+  }
+  function exportSalidas(list) {
+    var rows = [['Fecha', 'Cliente', 'Palet', 'Cajas', 'Unidades', 'Kilos']];
+    list.forEach(function (s) { rows.push([fdate(s.fecha), s.cliente, s.paletNum, s.cajas, s.unidades, s.kilos]); });
+    exportar(rows, 'SALIDAS BARRA DANBO ' + today() + '.xlsx', 'Salidas', [12, 48, 10, 8, 10, 12]);
+  }
+
+  /* ---------- ingreso: validaciones ---------- */
+  function parseNums(text) {
+    var out = [], seen = {};
+    String(text || '').split(/[,;\s]+/).filter(Boolean).forEach(function (t) {
+      var m = t.match(/^(\d+)\s*[-–]\s*(\d+)$/);
+      if (m && Number(m[2]) >= Number(m[1]) && Number(m[2]) - Number(m[1]) < 500) {
+        var w = m[1].length;
+        for (var n = Number(m[1]); n <= Number(m[2]); n++) { var s = String(n).padStart(w, '0'); out.push(s); }
+      } else out.push(t);
+    });
+    return out;
+  }
+  function parseNumKg(text) {
+    var out = [];
+    String(text || '').split(/\r?\n/).forEach(function (line) {
+      var m = line.match(/^\s*(\d+)\s*[\t;:=]\s*([\d.,]+)\s*(?:kg)?\s*$/i);
+      if (m) out.push({ num: m[1], kilos: m[2] });
+      else parseNums(line).forEach(function (n) { out.push({ num: n, kilos: '' }); });
+    });
+    return out;
+  }
+  function ingChecks() {
+    var ing = state.ing, P = state.params, out = [];
+    if (!ing.rows || !ing.rows.length) return out;
+    var nums = ing.rows.map(function (r) { return String(r.num); }), seen = {}, dup = [];
+    nums.forEach(function (n) { if (seen[n]) dup.push(n); seen[n] = 1; });
+    if (dup.length) out.push({ k: 'bad', t: 'Número repetido en la lista: ' + dup.join(', ') + '.' });
+    var abiertos = (state.D ? state.D.rows : []).filter(function (r) { return r.saldo > 0 && nums.indexOf(String(r.p.num)) >= 0; });
+    if (abiertos.length) out.push({ k: 'bad', t: 'Ya hay palets en depósito con estos números: ' + abiertos.map(function (r) { return r.p.num; }).join(', ') + '.' });
+    var cant = parseNum(ing.cant);
+    if (cant != null && cant !== ing.rows.length) out.push({ k: 'warn', t: 'El remito dice ' + fmtN(cant) + ' palets y la lista tiene ' + ing.rows.length + '.' });
+    var conK = ing.rows.filter(function (r) { return parseNum(r.kilos) != null; });
+    var kr = parseNum(ing.kilos);
+    if (conK.length) {
+      var sum = conK.reduce(function (a, r) { return a + parseNum(r.kilos); }, 0);
+      if (kr != null && conK.length === ing.rows.length && Math.abs(sum - kr) > P.difKilos) out.push({ k: 'warn', t: 'Los palets suman ' + fmtKg(sum) + ' y el remito dice ' + fmtKg(kr) + ' (diferencia ' + fmtKg(Math.abs(sum - kr)) + ').' });
+      else if (kr != null && conK.length === ing.rows.length) out.push({ k: 'ok', t: 'Los kilos de los palets coinciden con el remito (' + fmtKg(sum) + ').' });
+      if (conK.length < ing.rows.length) out.push({ k: 'info', t: (ing.rows.length - conK.length) + ' palets sin kilos: quedarán sin dato de kilos hasta que se pesen.' });
+    } else out.push({ k: 'info', t: 'Ningún palet tiene kilos cargados. Se puede guardar igual.' });
+    out.push({ k: 'info', t: ing.rows.length + ' palets × ' + P.cajasPalet + ' cajas = ' + fmtN(ing.rows.length * P.cajasPalet) + ' cajas (' + fmtN(ing.rows.length * P.cajasPalet * P.unidCaja) + ' unidades).' });
+    return out;
+  }
+  function checksHtml(list) {
+    return '<ul class="checks">' + list.map(function (c) { return '<li><span class="dot ' + (c.k === 'bad' ? 'bad' : c.k === 'ok' ? 'ok' : c.k === 'info' ? 'info' : '') + '"></span><span>' + esc(c.t) + '</span></li>'; }).join('') + '</ul>';
+  }
+
+  /* ---------- vistas ---------- */
+  function stat(l, v, s) { return '<div class="stat"><div class="l">' + esc(l) + '</div><div class="v">' + esc(v) + '</div><div class="s">' + esc(s) + '</div></div>'; }
+
+  function alertsBlock(D) {
+    if (!D.alerts.length) return '<section class="alerts"><div class="calm"><span class="dot"></span><span>Sin alertas. Los palets, remitos y pesadas cargados cierran.</span></div></section>';
+    var list = state.allAlerts ? D.alerts : D.alerts.slice(0, 6);
+    return '<section class="alerts"><header><h2>Alertas · ' + D.alerts.length + '</h2>' + (D.alerts.length > 6 ? '<button class="btn sec sm" data-act="alertas-todas">' + (state.allAlerts ? 'Ver menos' : 'Ver todas') + '</button>' : '') + '</header><ul>' +
+      list.map(function (a) { return '<li><span class="dot ' + (a.n === 'bad' ? 'bad' : '') + '"></span><span>' + esc(a.t) + '</span></li>'; }).join('') + '</ul></section>';
+  }
+  function clientesHtml(id) {
+    var list = state.salidas.filter(function (s) { return s.paletId === id; });
+    if (!list.length) return '';
+    var show = list.slice(0, 5);
+    return '<ul class="clis" aria-label="Clientes de este palet">' + show.map(function (s) {
+      return '<li><span title="' + esc(s.cliente || '') + '">' + esc(s.cliente || '—') + '</span><b>' + fmtN(s.cajas, 1) + ' cj · ' + fmtKg(Number(s.kilos)) + '</b></li>';
+    }).join('') + (list.length > 5 ? '<li class="more">y ' + (list.length - 5) + ' clientes más (ver Historial)</li>' : '') + '</ul>';
+  }
+  function paletEdit(r) {
+    var p = r.p;
+    return '<article class="pal"><header><span class="num"><small>N°</small>' + esc(p.num) + '</span><span class="chip info">Editando</span></header>' +
+      '<div class="field"><label for="ed-num">Número</label><input type="text" id="ed-num" value="' + esc(p.num) + '" autocomplete="off"></div>' +
+      '<div class="field"><label for="ed-remito">Remito</label><input type="text" id="ed-remito" value="' + esc(p.remito || '') + '" autocomplete="off"></div>' +
+      '<div class="field"><label for="ed-kg">Kilos de ingreso (vacío si no hay)</label><input type="text" inputmode="decimal" id="ed-kg" value="' + esc(p.kilosIngreso == null ? '' : p.kilosIngreso) + '"></div>' +
+      '<div class="field"><label for="ed-cajas">Cajas iniciales</label><input type="number" min="1" step="1" id="ed-cajas" value="' + esc(r.ini) + '"></div>' +
+      '<div class="acts"><button class="btn sm" data-act="pal-save" data-id="' + p.id + '">Guardar</button><button class="btn sec sm" data-act="pal-cancel">Cancelar</button></div></article>';
+  }
+  function paletCard(r) {
+    if (state.editPalet === r.p.id) return paletEdit(r);
+    var P = state.params, pct = Math.max(0, Math.min(100, r.saldo / r.ini * 100));
+    var chip = { cerrado: ['Despachado', 'muted'], sin: ['Sin salidas', 'ok'], abierto: ['Abierto', 'info'], negativo: ['Saldo negativo', 'bad'] }[r.estado];
+    return '<article class="pal' + (r.alerts.length ? ' has-alert' : '') + '">' +
+      '<header><span class="num"><small>N°</small>' + esc(r.p.num) + '</span><span class="chip ' + chip[1] + '">' + chip[0] + '</span></header>' +
+      '<div class="bar" role="img" aria-label="' + fmtN(r.saldo) + ' de ' + fmtN(r.ini) + ' cajas"><i style="width:' + pct + '%"></i></div>' +
+      '<p class="big"><b>' + fmtN(r.saldo) + '</b> de ' + fmtN(r.ini) + ' cajas · ' + fmtN(r.saldo * P.unidCaja) + ' unidades</p>' +
+      '<p class="kg">' + (r.kSaldo === null ? 'Sin kilos cargados' : fmtKg(r.kSaldo) + ' en el palet') + '</p>' +
+      clientesHtml(r.p.id) +
+      (r.comp ? '<p class="hold">' + fmtN(r.comp) + ' cajas en pedidos pendientes</p>' : '') +
+      r.alerts.map(function (a) { return '<p class="al ' + a.n + '">' + esc(a.t) + '</p>'; }).join('') +
+      '<footer>Remito ' + esc(r.p.remito || '—') + ' · ingresó ' + fdate(r.p.fecha) + '</footer>' +
+      '<div class="acts"><button class="btn sec sm" data-act="pal-edit" data-id="' + r.p.id + '">Editar</button>' +
+      '<button class="btn danger sm' + (state.confirmDel === 'pd' + r.p.id ? ' armed' : '') + '" data-act="pal-del" data-id="' + r.p.id + '">' + (state.confirmDel === 'pd' + r.p.id ? 'Confirmar: eliminar' : 'Eliminar') + '</button></div></article>';
+  }
+  function listaPalets(D) {
+    var q = state.q.trim().toLowerCase();
+    var list = D.rows.filter(function (r) {
+      if (state.filtro === 'saldo' && r.saldo <= 0) return false;
+      if (state.filtro === 'cerrado' && r.saldo > 0) return false;
+      if (q && String(r.p.num).toLowerCase().indexOf(q) < 0 && String(r.p.remito || '').toLowerCase().indexOf(q) < 0) return false;
+      return true;
+    }).sort(function (a, b) { return String(a.p.fecha).localeCompare(String(b.p.fecha)) || cmpNum(a.p.num, b.p.num); });
+    if (!list.length) return '<p class="muted">No hay palets con ese filtro.</p>';
+    return list.map(paletCard).join('');
+  }
+  function renderTablero(D) {
+    var T = D.totals, P = state.params;
+    if (!state.palets.length) {
+      return '<div class="empty"><h3>Todavía no hay palets cargados</h3><p class="lead">Cuando llegue un camión de Tremblay, cargá el remito y la numeración de los palets en Ingreso. Acá vas a ver cuántas cajas y kilos quedan en cada uno.</p><button class="btn" data-act="tab" data-v="ingreso">Cargar el primer remito</button></div>';
+    }
+    return '<section class="stats">' +
+      stat('Palets en depósito', fmtN(T.conSaldo), 'de ' + fmtN(state.palets.length) + ' ingresados') +
+      stat('Cajas en cámara', fmtN(T.cajas), fmtN(T.unidades) + ' unidades') +
+      stat('Kilos en cámara', T.kilosN ? fmtN(T.kilos, 1) : '—', T.sinKilos ? T.sinKilos + ' palets sin kilos cargados' : 'ingresado menos pesado') +
+      stat('Kilos despachados', fmtN(T.kilosDesp, 1), fmtN(T.cajasDesp, 1) + ' cajas · ' + fmtN(T.unidDesp) + ' unidades') +
+      stat('Por pesar', fmtN(T.comp), 'cajas en pedidos pendientes') + '</section>' +
+      alertsBlock(D) +
+      '<section><div class="sechead"><h2>Palets</h2><div class="seg" role="group" aria-label="Filtro">' +
+      [['saldo', 'En depósito'], ['cerrado', 'Despachados'], ['todos', 'Todos']].map(function (f) { return '<button data-act="filtro" data-v="' + f[0] + '" aria-pressed="' + (state.filtro === f[0]) + '">' + f[1] + '</button>'; }).join('') +
+      '</div><input type="search" id="q" data-bind="q" placeholder="Buscar palet o remito" value="' + esc(state.q) + '" style="width:220px" aria-label="Buscar palet o remito"></div><div class="grid" id="lista">' + listaPalets(D) + '</div></section>' +
+      '<details class="panel"' + (state.paramsOpen ? ' open' : '') + ' id="pdet"><summary>Parámetros de control</summary><div class="pgrid">' +
+      pfield('cajasPalet', 'Cajas por palet', P.cajasPalet) + pfield('unidCaja', 'Unidades por caja', P.unidCaja) + pfield('kgCaja', 'Kilos por caja (aprox.)', P.kgCaja) + pfield('tolKg', 'Tolerancia de peso por caja (%)', P.tolKg) + pfield('difKilos', 'Diferencia de kilos tolerada (kg)', P.difKilos) +
+      '</div></details>';
+  }
+  function pfield(k, l, v) { return '<div class="field"><label for="p-' + k + '">' + esc(l) + '</label><input type="number" step="any" id="p-' + k + '" data-param="' + k + '" value="' + esc(v) + '"></div>'; }
+
+  function renderIngreso(D) {
+    var ing = state.ing;
+    var html = '<section class="panel"><h3>Ingreso de camión</h3><p class="lead">Cargá el remito de Tremblay y la numeración que te anotaron en el papel. Los kilos por palet son opcionales: si todavía no los tenés, quedan vacíos.</p>' +
+      '<div class="row">' +
+      '<div class="field"><label for="i-remito">Remito Nº</label><input type="text" id="i-remito" data-bind="ing.remito" value="' + esc(ing.remito) + '" autocomplete="off"></div>' +
+      '<div class="field"><label for="i-fecha">Fecha</label><input type="date" id="i-fecha" data-bind="ing.fecha" value="' + esc(ing.fecha) + '"></div>' +
+      '<div class="field"><label for="i-cant">Palets según remito</label><input type="number" id="i-cant" min="0" data-bind="ing.cant" value="' + esc(ing.cant) + '"></div>' +
+      '<div class="field"><label for="i-kilos">Kilos según remito</label><input type="text" inputmode="decimal" id="i-kilos" data-bind="ing.kilos" value="' + esc(ing.kilos) + '"></div></div>' +
+      '<div class="field"><label for="i-nums">Numeración de palets: rangos y comas (101-110, 115) o pegá dos columnas desde Excel (número y kilos)</label><textarea id="i-nums" data-bind="ing.nums" placeholder="101-110&#10;o: 1176 [tab] 918,26">' + esc(ing.nums) + '</textarea></div>' +
+      '<div><button class="btn" data-act="ing-armar">Armar lista de palets</button></div>';
+    if (ing.rows && ing.rows.length) {
+      html += '<div class="row"><div class="field" style="max-width:220px"><label for="i-kgt">Kilos por palet (igual para todos)</label><input type="text" inputmode="decimal" id="i-kgt" data-bind="ing.kgTodos" value="' + esc(ing.kgTodos) + '"></div><div><button class="btn sec" data-act="ing-kg-todos">Aplicar a todos</button></div></div>' +
+        '<div class="tw"><table><thead><tr><th>Palet</th><th class="n">Cajas</th><th class="n">Kilos (opcional)</th><th></th></tr></thead><tbody>' +
+        ing.rows.map(function (r, i) { return '<tr><td><span class="mono">' + esc(r.num) + '</span></td><td class="n">' + state.params.cajasPalet + '</td><td class="n"><input class="kin" type="text" inputmode="decimal" aria-label="Kilos del palet ' + esc(r.num) + '" data-bind="ing.rows.' + i + '.kilos" value="' + esc(r.kilos) + '"></td><td><button class="btn sec sm" data-act="ing-quitar" data-i="' + i + '">Quitar</button></td></tr>'; }).join('') +
+        '</tbody></table></div><div id="ingchecks">' + checksHtml(ingChecks()) + '</div>' +
+        '<div class="row"><button class="btn" data-act="ing-guardar">Guardar ingreso</button><button class="btn sec" data-act="ing-limpiar">Empezar de nuevo</button></div>';
+    }
+    html += '</section>';
+    var rem = state.remitos.slice().sort(function (a, b) { return String(b.creado).localeCompare(String(a.creado)); }).slice(0, 10);
+    html += '<section><div class="sechead"><h2>Remitos recientes</h2></div>' + (rem.length ? '<div class="tw"><table><thead><tr><th>Fecha</th><th>Remito</th><th class="n">Palets</th><th class="n">Kilos remito</th><th class="n">Kilos en palets</th></tr></thead><tbody>' +
+      rem.map(function (r) {
+        var mine = state.palets.filter(function (p) { return String(p.remito) === String(r.remito); });
+        var k = mine.filter(function (p) { return p.kilosIngreso != null; }).reduce(function (a, p) { return a + Number(p.kilosIngreso); }, 0);
+        var anyK = mine.some(function (p) { return p.kilosIngreso != null; });
+        return '<tr><td>' + fdate(r.fecha) + '</td><td class="mono">' + esc(r.remito) + '</td><td class="n">' + mine.length + (Number(r.palets) && Number(r.palets) !== mine.length ? ' de ' + fmtN(r.palets) : '') + '</td><td class="n">' + (r.kilos != null ? fmtKg(Number(r.kilos)) : '—') + '</td><td class="n">' + (anyK ? fmtKg(k) : '—') + '</td></tr>';
+      }).join('') + '</tbody></table></div>' : '<p class="muted">Todavía no cargaste remitos.</p>') + '</section>';
+    return html;
+  }
+
+  function selectPalet(D, l, ped, i) {
+    var opts = D.rows.filter(function (r) { return r.saldo > 0 || r.p.id === l.paletId; }).sort(function (a, b) { return String(a.p.fecha).localeCompare(String(b.p.fecha)) || cmpNum(a.p.num, b.p.num); });
+    return '<select data-lpalet data-ped="' + ped.id + '" data-i="' + i + '" aria-label="Palet de la línea ' + (i + 1) + '"><option value=""' + (l.paletId ? '' : ' selected') + '>Elegir…</option>' +
+      opts.map(function (r) { return '<option value="' + r.p.id + '"' + (r.p.id === l.paletId ? ' selected' : '') + '>N° ' + esc(r.p.num) + ' · saldo ' + fmtN(r.saldo) + '</option>'; }).join('') + '</select>';
+  }
+  function lineaHints(l) {
+    var P = state.params, hints = [];
+    if (l.confirmada) hints.push(['ok', 'Cargada']);
+    else {
+      if (l.sugerido) hints.push(['info', 'Palet sugerido']);
+      if (l.nota) hints.push(['warn', l.nota]);
+      if (!l.paletId && !l.nota) hints.push(['bad', 'Sin palet']);
+    }
+    if (Math.abs((Number(l.unidades) || 0) - (Number(l.cajas) || 0) * P.unidCaja) > 0.001) hints.push(['warn', 'Unidades ≠ cajas × ' + P.unidCaja]);
+    var kg = parseNum(l.kilos);
+    if (kg > 0 && l.cajas > 0 && Math.abs(kg / l.cajas - P.kgCaja) > P.kgCaja * (P.tolKg / 100)) hints.push(['warn', fmtN(kg / l.cajas, 1) + ' kg/caja']);
+    return hints.map(function (x) { return '<span class="chip ' + x[0] + '">' + esc(x[1]) + '</span>'; }).join('');
+  }
+  function refreshRow(pedId, i) {
+    var ped = state.pedidos.filter(function (p) { return p.id === pedId; })[0];
+    var tr = document.querySelector('tr[data-row="' + pedId + '|' + i + '"]');
+    if (!ped || !tr) return;
+    var l = ped.lineas[i], h = tr.querySelector('.hint'), b = tr.querySelector('[data-act="ped-conf"]');
+    if (h) h.innerHTML = lineaHints(l);
+    if (b) b.disabled = !(parseNum(l.kilos) > 0 && l.paletId);
+    var all = document.querySelector('[data-act="ped-conf-todas"][data-ped="' + pedId + '"]');
+    if (all) all.disabled = !ped.lineas.some(function (x) { return !x.confirmada && parseNum(x.kilos) > 0 && x.paletId; });
+  }
+  function lineaRow(D, ped, l, i) {
+    var kg = parseNum(l.kilos);
+    var h = '<div class="hint">' + lineaHints(l) + '</div>';
+    if (l.confirmada) return '<tr class="done" data-row="' + ped.id + '|' + i + '"><td>' + esc(l.cliente) + h + '</td><td class="mono">N° ' + esc(l.paletNum) + '</td><td class="n">' + fmtN(l.cajas, 1) + '</td><td class="n">' + fmtN(l.unidades) + '</td><td class="n">' + fmtKg(kg) + '</td><td></td></tr>';
+    return '<tr data-row="' + ped.id + '|' + i + '"><td>' + esc(l.cliente || '—') + h + '</td><td>' + selectPalet(D, l, ped, i) + '</td><td class="n">' + fmtN(l.cajas, 1) + '</td><td class="n">' + fmtN(l.unidades) + '</td>' +
+      '<td class="n"><input class="kin" type="text" inputmode="decimal" data-kilos data-ped="' + ped.id + '" data-i="' + i + '" aria-label="Kilos pesados de la línea ' + (i + 1) + '" value="' + esc(l.kilos == null ? '' : l.kilos) + '"></td>' +
+      '<td><button class="btn sm" data-act="ped-conf" data-ped="' + ped.id + '" data-i="' + i + '"' + (kg > 0 && l.paletId ? '' : ' disabled') + '>Cargar</button></td></tr>';
+  }
+  function pedidoCard(D, ped) {
+    var ls = ped.lineas || [], done = ls.filter(function (l) { return l.confirmada; }).length;
+    var tc = ls.reduce(function (a, l) { return a + (Number(l.cajas) || 0); }, 0);
+    var key = 'pb' + ped.id;
+    var pend = ls.some(function (l) { return !l.confirmada && parseNum(l.kilos) > 0 && l.paletId; });
+    return '<section class="panel"><div class="pedhead"><h3>Pedido del ' + fdate(ped.fecha) + '</h3><span class="chip ' + (ped.estado === 'pesado' ? 'ok' : 'info') + '">' + done + ' de ' + ls.length + ' pesadas</span>' +
+      '<span class="muted">' + esc(ped.archivo || '') + (ped.hoja ? ' · ' + esc(ped.hoja) : '') + ' · ' + fmtN(tc, 1) + ' cajas</span></div>' +
+      '<div class="tw"><table><thead><tr><th>Cliente</th><th>Palet</th><th class="n">Cajas</th><th class="n">Unidades</th><th class="n">Kilos pesados</th><th></th></tr></thead><tbody>' +
+      ls.map(function (l, i) { return lineaRow(D, ped, l, i); }).join('') + '</tbody></table></div>' +
+      '<div class="row"><button class="btn" data-act="ped-conf-todas" data-ped="' + ped.id + '"' + (pend ? '' : ' disabled') + '>Cargar todas las pesadas</button>' +
+      (state.dl ? '<button class="btn sec" data-act="ped-exportar" data-ped="' + ped.id + '">Exportar Excel con kilos</button>' : '') +
+      '<button class="btn danger' + (state.confirmDel === key ? ' armed' : '') + '" data-act="ped-borrar" data-ped="' + ped.id + '">' + (state.confirmDel === key ? 'Confirmar: eliminar pedido' : 'Eliminar pedido') + '</button></div></section>';
+  }
+  function importBlock() {
+    var imp = state.imp, m = imp.map;
+    var head = (imp.sheets[imp.sheet] || [])[imp.headerRow] || [];
+    function sel(k, l) {
+      return '<div class="field"><label for="m-' + k + '">' + l + '</label><select id="m-' + k + '" data-bind="imp.map.' + k + '"><option value="-1">(ninguna)</option>' +
+        head.map(function (h, i) { return '<option value="' + i + '"' + (m[k] === i ? ' selected' : '') + '>' + esc(String(h == null || h === '' ? 'Columna ' + (i + 1) : h)) + '</option>'; }).join('') + '</select></div>';
+    }
+    var lines = buildLines(), tc = lines.reduce(function (a, l) { return a + l.cajas; }, 0), tu = lines.reduce(function (a, l) { return a + l.unidades; }, 0);
+    var sinPal = lines.filter(function (l) { return !l.paletTexto; }).length;
+    return '<section class="panel"><div class="pedhead"><h3>Excel de Tremblay</h3><span class="muted">' + esc(imp.fileName) + '</span></div>' +
+      '<div class="row">' +
+      (imp.names.length > 1 ? '<div class="field"><label for="m-sheet">Hoja</label><select id="m-sheet" data-bind="imp.sheet">' + imp.names.map(function (n) { return '<option' + (n === imp.sheet ? ' selected' : '') + ' value="' + esc(n) + '">' + esc(n) + '</option>'; }).join('') + '</select></div>' : '') +
+      '<div class="field"><label for="m-hr">Fila de encabezados</label><input type="number" min="1" id="m-hr" data-bind="imp.headerRow" value="' + (imp.headerRow + 1) + '"></div>' +
+      '<div class="field"><label for="m-fecha">Fecha del pedido</label><input type="date" id="m-fecha" data-bind="imp.fechaPedido" value="' + esc(imp.fechaPedido) + '"></div></div>' +
+      '<p class="lbl">Qué es cada columna</p><div class="row">' + sel('cliente', 'Cliente') + sel('palet', 'Palet') + sel('cajas', 'Cajas') + sel('unidades', 'Unidades') + sel('kilos', 'Kilos (solo para estimar)') + sel('producto', 'Producto (filtro)') + '</div>' +
+      (m.producto >= 0 ? '<div class="field" style="max-width:260px"><label for="m-filtro">Solo filas que contengan</label><input type="text" id="m-filtro" data-bind="imp.filtro" value="' + esc(imp.filtro) + '" placeholder="danbo"></div>' : '') +
+      '<div>' + (lines.length ? '<p><b>' + lines.length + '</b> líneas · <b>' + fmtN(tc, 1) + '</b> cajas · <b>' + fmtN(tu) + '</b> unidades' + (sinPal ? ' · ' + sinPal + ' sin palet en el Excel (se sugiere uno)' : '') + '</p>' : '<p class="muted">No se detectaron líneas. Revisá la fila de encabezados y las columnas.</p>') + '</div>' +
+      (lines.length ? '<div class="tw"><table><thead><tr><th>Cliente</th><th>Palet en Excel</th><th class="n">Cajas</th><th class="n">Unidades</th></tr></thead><tbody>' +
+        lines.slice(0, 8).map(function (l) { return '<tr><td>' + esc(l.cliente || '—') + (l.nota ? ' <span class="chip warn">' + esc(l.nota) + '</span>' : '') + '</td><td class="mono">' + esc(l.paletTexto || '—') + '</td><td class="n">' + fmtN(l.cajas, 1) + '</td><td class="n">' + fmtN(l.unidades) + '</td></tr>'; }).join('') +
+        (lines.length > 8 ? '<tr><td colspan="4" class="muted">… y ' + (lines.length - 8) + ' más</td></tr>' : '') + '</tbody></table></div>' : '') +
+      '<div class="row"><button class="btn" data-act="imp-armar"' + (lines.length ? '' : ' disabled') + '>Armar pedido</button><button class="btn sec" data-act="imp-cancelar">Cancelar</button></div></section>';
+  }
+  function renderPedido(D) {
+    var html = '';
+    if (state.imp) html += importBlock();
+    else html += '<label class="drop" id="drop" for="file"><b>Subí el Excel de Tremblay</b><span class="muted">Arrastralo hasta acá o tocá para elegirlo. Se arma un pedido con los palets sugeridos.</span></label>';
+    html += '<input type="file" id="file" class="visually" accept=".xlsx,.xls,.csv">';
+    var peds = state.pedidos.slice().sort(function (a, b) { return String(b.creado).localeCompare(String(a.creado)); });
+    var pend = peds.filter(function (p) { return p.estado !== 'pesado'; }), hechos = peds.filter(function (p) { return p.estado === 'pesado'; }).slice(0, 5);
+    if (!peds.length && !state.imp) html += '<p class="lead">Cuando Tremblay mande el Excel con los clientes que compraron Barra Danbo, subilo acá. Después pesás cada línea y los kilos se descuentan de cada palet.</p>';
+    if (pend.length) html += pend.map(function (p) { return pedidoCard(D, p); }).join('');
+    if (hechos.length) {
+      html += '<section><div class="sechead"><h2>Pedidos pesados</h2></div><div class="tw"><table><thead><tr><th>Fecha</th><th>Archivo</th><th class="n">Líneas</th><th class="n">Kilos</th><th></th></tr></thead><tbody>' +
+        hechos.map(function (p) {
+          var kg = (p.lineas || []).reduce(function (a, l) { return a + (parseNum(l.kilos) || 0); }, 0);
+          return '<tr><td>' + fdate(p.fecha) + '</td><td>' + esc(p.archivo || '') + '</td><td class="n">' + (p.lineas || []).length + '</td><td class="n">' + fmtKg(kg) + '</td><td>' + (state.dl ? '<button class="btn sec sm" data-act="ped-exportar" data-ped="' + p.id + '">Exportar Excel</button>' : '') + '</td></tr>';
+        }).join('') + '</tbody></table></div></section>';
+    }
+    return html;
+  }
+  function agruparClientes() {
+    var q = state.hq.trim().toLowerCase(), m = {};
+    state.salidas.forEach(function (s) {
+      var k = String(s.cliente || '—').trim();
+      if (q && k.toLowerCase().indexOf(q) < 0 && String(s.paletNum).toLowerCase().indexOf(q) < 0) return;
+      var g = m[k] || (m[k] = { cliente: k, cajas: 0, unidades: 0, kilos: 0, palets: [] });
+      g.cajas += Number(s.cajas) || 0; g.unidades += Number(s.unidades) || 0; g.kilos += Number(s.kilos) || 0;
+      if (g.palets.indexOf(String(s.paletNum)) < 0) g.palets.push(String(s.paletNum));
+    });
+    return Object.keys(m).map(function (k) { return m[k]; }).sort(function (a, b) { return b.kilos - a.kilos || a.cliente.localeCompare(b.cliente, 'es'); });
+  }
+  function listaClientes() {
+    var list = agruparClientes();
+    state._histCli = list;
+    if (!list.length) return '<p class="muted">No hay salidas para mostrar.</p>';
+    var tc = 0, tu = 0, tk = 0;
+    list.forEach(function (g) { tc += g.cajas; tu += g.unidades; tk += g.kilos; });
+    return '<div class="tw"><table><thead><tr><th>Cliente</th><th>Palets</th><th class="n">Cajas</th><th class="n">Unidades</th><th class="n">Kilos</th></tr></thead><tbody>' +
+      list.map(function (g) { return '<tr><td>' + esc(g.cliente) + '</td><td class="mono">' + esc(g.palets.join(', ')) + '</td><td class="n">' + fmtN(g.cajas, 1) + '</td><td class="n">' + fmtN(g.unidades) + '</td><td class="n">' + fmtKg(g.kilos) + '</td></tr>'; }).join('') +
+      '</tbody><tfoot><tr><td colspan="2">Total (' + list.length + ' clientes)</td><td class="n">' + fmtN(tc, 1) + '</td><td class="n">' + fmtN(tu) + '</td><td class="n">' + fmtKg(tk) + '</td></tr></tfoot></table></div>';
+  }
+  function exportClientes(list) {
+    var rows = [['Cliente', 'Palets', 'Cajas', 'Unidades', 'Kilos']];
+    list.forEach(function (g) { rows.push([g.cliente, g.palets.join(', '), g.cajas, g.unidades, Math.round(g.kilos * 100) / 100]); });
+    exportar(rows, 'KILOS POR CLIENTE BARRA DANBO ' + today() + '.xlsx', 'Clientes', [60, 22, 8, 10, 12]);
+  }
+  function listaHistorial() {
+    if (state.histView === 'cliente') return listaClientes();
+    var q = state.hq.trim().toLowerCase();
+    var list = state.salidas.filter(function (s) { return !q || String(s.paletNum).toLowerCase().indexOf(q) >= 0 || String(s.cliente || '').toLowerCase().indexOf(q) >= 0; })
+      .sort(function (a, b) { return String(b.fecha).localeCompare(String(a.fecha)) || String(b.creado).localeCompare(String(a.creado)); });
+    state._hist = list;
+    if (!list.length) return '<p class="muted">No hay salidas para mostrar.</p>';
+    var P = state.params, tc = 0, tu = 0, tk = 0;
+    list.forEach(function (s) { tc += Number(s.cajas) || 0; tu += Number(s.unidades) || 0; tk += Number(s.kilos) || 0; });
+    return '<div class="tw"><table><thead><tr><th>Fecha</th><th>Cliente</th><th>Palet</th><th class="n">Cajas</th><th class="n">Unidades</th><th class="n">Kilos</th><th class="n">Kg/caja</th><th></th></tr></thead><tbody>' +
+      list.slice(0, 300).map(function (s) {
+        var al = salAlerts(s, P), key = 'sal' + s.id, pc = Number(s.cajas) > 0 ? Number(s.kilos) / Number(s.cajas) : null;
+        return '<tr><td>' + fdate(s.fecha) + '</td><td>' + esc(s.cliente || '—') + (al.length ? '<div class="hint">' + al.map(function (t) { return '<span class="chip warn">' + esc(t) + '</span>'; }).join('') + '</div>' : '') + '</td><td class="mono">N° ' + esc(s.paletNum) + '</td><td class="n">' + fmtN(s.cajas, 1) + '</td><td class="n">' + fmtN(s.unidades) + '</td><td class="n">' + fmtKg(Number(s.kilos)) + '</td><td class="n">' + fmtN(pc, 1) + '</td><td><button class="btn danger sm' + (state.confirmDel === key ? ' armed' : '') + '" data-act="sal-anular" data-id="' + s.id + '">' + (state.confirmDel === key ? 'Confirmar' : 'Anular') + '</button></td></tr>';
+      }).join('') + '</tbody><tfoot><tr><td colspan="3">Total (' + list.length + ' salidas)</td><td class="n">' + fmtN(tc, 1) + '</td><td class="n">' + fmtN(tu) + '</td><td class="n">' + fmtKg(tk) + '</td><td colspan="2"></td></tr></tfoot></table></div>';
+  }
+  function renderHistorial() {
+    return '<section><div class="sechead"><h2>' + (state.histView === 'cliente' ? 'Kilos por cliente' : 'Salidas pesadas') + '</h2><div class="seg" role="group" aria-label="Vista">' +
+      [['salida', 'Por salida'], ['cliente', 'Por cliente']].map(function (f) { return '<button data-act="hist-vista" data-v="' + f[0] + '" aria-pressed="' + (state.histView === f[0]) + '">' + f[1] + '</button>'; }).join('') +
+      '</div><input type="search" id="hq" data-bind="hq" placeholder="Buscar cliente o palet" value="' + esc(state.hq) + '" style="width:220px" aria-label="Buscar cliente o palet">' +
+      (state.dl ? '<button class="btn sec" data-act="sal-exportar">Exportar Excel</button>' : '') + '</div><div id="hlista">' + listaHistorial() + '</div></section>';
+  }
+
+  /* ---------- render ---------- */
+  function render() {
+    state.pending = false;
+    if (state.error === 'nodb') {
+      $('#view').innerHTML = '<div class="empty"><h3>No se pudo cargar la información</h3><p class="lead">No se pudo conectar con la planilla de datos. Revisá la conexión y recargá la página.</p></div>';
+      return;
+    }
+    if (!(state.loaded.palets && state.loaded.salidas && state.loaded.remitos && state.loaded.pedidos && state.loaded.params)) return;
+    var D = derive(); state.D = D;
+    var pl = 0;
+    state.pedidos.forEach(function (p) { if (p.estado !== 'pesado') pl += (p.lineas || []).filter(function (l) { return !l.confirmada; }).length; });
+    $('#tabs').innerHTML = TABS.map(function (t) {
+      var c = t[0] === 'tablero' && D.alerts.length ? '<span class="count bad">' + D.alerts.length + '</span>' : t[0] === 'pedido' && pl ? '<span class="count">' + pl + '</span>' : '';
+      return '<button class="tab" role="tab" data-act="tab" data-v="' + t[0] + '" aria-selected="' + (state.tab === t[0]) + '">' + t[1] + c + '</button>';
+    }).join('');
+    var fn = { tablero: renderTablero, ingreso: renderIngreso, pedido: renderPedido, historial: renderHistorial }[state.tab];
+    $('#view').innerHTML = fn(D);
+  }
+  function schedule() {
+    var a = document.activeElement;
+    if (a && $('#view').contains(a) && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) { state.pending = true; return; }
+    render();
+  }
+
+  /* ---------- eventos ---------- */
+  function setPath(path, val) {
+    var p = path.split('.'), o = state;
+    for (var i = 0; i < p.length - 1; i++) o = o[p[i]];
+    o[p[p.length - 1]] = val;
+  }
+  function act(a, el) {
+    var d = el.dataset;
+    if (a === 'tab') { state.tab = d.v; render(); window.scrollTo(0, 0); }
+    else if (a === 'filtro') { state.filtro = d.v; render(); }
+    else if (a === 'alertas-todas') { state.allAlerts = !state.allAlerts; render(); }
+    else if (a === 'ing-armar') {
+      var parsed = parseNumKg(state.ing.nums);
+      if (!parsed.length) { toast('Escribí la numeración de los palets. Ejemplo: 101-110', 'bad'); return; }
+      var old = {}; (state.ing.rows || []).forEach(function (r) { old[r.num] = r.kilos; });
+      state.ing.rows = parsed.map(function (x) { return { num: x.num, kilos: x.kilos || old[x.num] || '' }; });
+      render();
+    }
+    else if (a === 'ing-kg-todos') { var v = state.ing.kgTodos; state.ing.rows.forEach(function (r) { r.kilos = v; }); render(); }
+    else if (a === 'ing-quitar') { state.ing.rows.splice(Number(d.i), 1); render(); }
+    else if (a === 'ing-limpiar') { state.ing = newIng(); render(); }
+    else if (a === 'ing-guardar') guardarIngreso();
+    else if (a === 'pal-edit') { state.editPalet = d.id; render(); }
+    else if (a === 'pal-cancel') { state.editPalet = null; render(); }
+    else if (a === 'pal-save') guardarPalet(d.id);
+    else if (a === 'pal-del') confirmTwice('pd' + d.id, function () { borrarPalet(d.id); });
+    else if (a === 'imp-armar') armarPedido();
+    else if (a === 'imp-cancelar') { state.imp = null; render(); }
+    else if (a === 'ped-conf') confirmar(d.ped, [Number(d.i)]);
+    else if (a === 'ped-conf-todas') {
+      var ped = state.pedidos.filter(function (p) { return p.id === d.ped; })[0];
+      if (ped) confirmar(d.ped, ped.lineas.map(function (l, i) { return i; }).filter(function (i) { return !ped.lineas[i].confirmada && parseNum(ped.lineas[i].kilos) > 0; }));
+    }
+    else if (a === 'ped-exportar') exportPedido(d.ped);
+    else if (a === 'ped-borrar') confirmTwice('pb' + d.ped, function () { borrarPedido(d.ped); });
+    else if (a === 'sal-anular') confirmTwice('sal' + d.id, function () { anularSalida(d.id); });
+    else if (a === 'hist-vista') { state.histView = d.v; render(); }
+    else if (a === 'sal-exportar') { if (state.histView === 'cliente') exportClientes(state._histCli || []); else exportSalidas(state._hist || []); }
+  }
+  function confirmTwice(key, fn) {
+    if (state.confirmDel === key) { state.confirmDel = null; fn(); render(); return; }
+    state.confirmDel = key; render();
+    clearTimeout(confirmTwice._t);
+    confirmTwice._t = setTimeout(function () { if (state.confirmDel === key) { state.confirmDel = null; render(); } }, 4000);
+  }
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest('[data-act]');
+    if (el) act(el.dataset.act, el);
+  });
+  document.addEventListener('input', function (e) {
+    var t = e.target, b = t.dataset && t.dataset.bind;
+    if (!b) return;
+    if (b === 'q') { state.q = t.value; $('#lista').innerHTML = listaPalets(state.D); return; }
+    if (b === 'hq') { state.hq = t.value; $('#hlista').innerHTML = listaHistorial(); return; }
+    if (b.indexOf('ing.') === 0) {
+      setPath(b, t.value);
+      var c = $('#ingchecks'); if (c) c.innerHTML = checksHtml(ingChecks());
+    }
+  });
+  document.addEventListener('change', function (e) {
+    var t = e.target, d = t.dataset || {};
+    if (t.id === 'file' && t.files && t.files[0]) { loadFile(t.files[0]); t.value = ''; return; }
+    if (d.bind && d.bind.indexOf('imp.') === 0) {
+      var imp = state.imp;
+      if (!imp) return;
+      if (d.bind === 'imp.sheet') { imp.sheet = t.value; initSheet(); }
+      else if (d.bind === 'imp.headerRow') { imp.headerRow = Math.max(0, (Number(t.value) || 1) - 1); imp.map = autoMap((imp.sheets[imp.sheet] || [])[imp.headerRow]); }
+      else if (d.bind.indexOf('imp.map.') === 0) setPath(d.bind, Number(t.value));
+      else setPath(d.bind, t.value);
+      render(); return;
+    }
+    if (d.param) {
+      var n = parseNum(t.value);
+      if (n === null || n < 0) { toast('Poné un número válido.', 'bad'); render(); return; }
+      var P = Object.assign({}, state.params); P[d.param] = n; state.params = P;
+      safe(function () { return state.db.doc('config/params').set(P); }, 'No se pudo guardar el parámetro.');
+      render(); return;
+    }
+    if (d.lpalet !== undefined) {
+      var D = state.D, r = D.rows.filter(function (x) { return x.p.id === t.value; })[0];
+      updLinea(d.ped, Number(d.i), { paletId: r ? r.p.id : null, paletNum: r ? r.p.num : '', sugerido: false, nota: '' });
+      refreshRow(d.ped, Number(d.i)); return;
+    }
+    if (d.kilos !== undefined) {
+      var kg = parseNum(t.value);
+      updLinea(d.ped, Number(d.i), { kilos: kg });
+      refreshRow(d.ped, Number(d.i));
+    }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && e.target.dataset && e.target.dataset.kilos !== undefined) {
+      e.preventDefault();
+      var all = Array.prototype.slice.call(document.querySelectorAll('[data-kilos]')), i = all.indexOf(e.target);
+      if (all[i + 1]) all[i + 1].focus(); else e.target.blur();
+    }
+  });
+  document.addEventListener('toggle', function (e) { if (e.target.id === 'pdet') state.paramsOpen = e.target.open; }, true);
+  document.addEventListener('focusout', function () {
+    setTimeout(function () { if (state.pending) schedule(); }, 0);
+  });
+  document.addEventListener('dragover', function (e) { var d = e.target.closest && e.target.closest('#drop'); if (d) { e.preventDefault(); d.classList.add('over'); } });
+  document.addEventListener('dragleave', function (e) { var d = e.target.closest && e.target.closest('#drop'); if (d) d.classList.remove('over'); });
+  document.addEventListener('drop', function (e) {
+    var d = e.target.closest && e.target.closest('#drop');
+    if (d) { e.preventDefault(); d.classList.remove('over'); var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if (f) loadFile(f); }
+  });
+
+  /* ---------- arranque ---------- */
+  function boot() {
+    if (!window.claude || !window.claude.use) { state.error = 'nodb'; render(); return; }
+    Promise.all([window.claude.use('db'), window.claude.use('downloads')]).then(function (r) {
+      var db = r[0]; state.dl = r[1];
+      if (!db) { state.error = 'nodb'; render(); return; }
+      state.db = db;
+      function sub(col, key, sorter) {
+        db.collection(col).onSnapshot(function (snap) {
+          state[key] = snap.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); });
+          if (sorter) state[key].sort(sorter);
+          state.loaded[key] = true; schedule();
+        }, function (err) { console.error(err); state.error = 'nodb'; render(); });
+      }
+      sub('palets', 'palets'); sub('salidas', 'salidas'); sub('remitos', 'remitos'); sub('pedidos', 'pedidos');
+      db.doc('config/params').onSnapshot(function (s) {
+        state.params = Object.assign({}, DEF, s.exists ? s.data() : {});
+        state.loaded.params = true; schedule();
+      }, function (err) { console.error(err); });
+    }).catch(function (e) { console.error(e); state.error = 'nodb'; render(); });
+  }
+  boot();
+})();
+</script>
+
+</body>
+</html>
