@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Palets Barra Danbo</title>
+<link rel="icon" type="image/png" href="img/icono.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: cabecera fija con pestañas; tablero de palets en grilla; formularios y tablas en paneles anchos. Estética de cámara frigorífica: gris azulado frío, teal para acciones, amarillo queso solo en las barras de stock. */
@@ -56,7 +57,19 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 /* cabecera */
 .top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); padding-top: 14px; }
-.brand { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.brandbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; background: linear-gradient(135deg, #0F2342 0%, #1B3E6B 100%); border-radius: 10px; padding: 10px 16px; margin-bottom: 4px; box-shadow: 0 1px 0 rgba(255,255,255,.08) inset, 0 2px 8px rgba(15,35,66,.18); border-bottom: 3px solid var(--cheese); }
+.logochip { background: #fff; border-radius: 8px; padding: 5px 10px; display: flex; align-items: center; justify-content: center; flex: none; }
+.logochip img { display: block; height: 48px; width: auto; }
+.brandtitle { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; min-width: 0; }
+.brandtitle .stencil { color: #fff; }
+.brandtitle .brandsub { color: #BFD0E6; }
+@media (max-width: 640px) {
+  .brandbar { padding: 8px 10px; gap: 8px; }
+  .logochip { padding: 4px 6px; }
+  .logochip img { height: 28px; }
+  .brandtitle .stencil { font-size: 22px; }
+  .brandtitle .brandsub { display: none; }
+}
 .stencil { font-family: var(--f-display); font-weight: 700; font-size: 30px; letter-spacing: .08em; text-transform: uppercase; line-height: 1; }
 .brandsub { color: var(--ink2); font-size: 13px; letter-spacing: .02em; }
 .tabs { display: flex; gap: 4px; overflow-x: auto; margin-top: 10px; scrollbar-width: none; }
@@ -182,6 +195,7 @@ details.panel summary { cursor: pointer; font-family: var(--f-display); font-siz
 .clis .more { color: var(--ink2); }
 .gate { position: fixed; inset: 0; z-index: 50; background: var(--bg); display: flex; align-items: center; justify-content: center; padding: 16px; }
 .gatebox { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 24px; max-width: 360px; width: 100%; display: flex; flex-direction: column; gap: 14px; }
+.gatelogo { height: 64px; width: auto; align-self: center; background: #fff; border-radius: 8px; padding: 6px 12px; }
 .gatebox h2 { font-family: var(--f-display); font-size: 28px; text-transform: uppercase; letter-spacing: .04em; margin: 0; }
 .gatemsg { color: var(--bad); min-height: 1.2em; margin: 0; }
 .acts { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -192,7 +206,7 @@ details.panel summary { cursor: pointer; font-family: var(--f-display); font-siz
 
 <div class="wrap">
   <header class="top">
-    <div class="brand"><h1 class="stencil">Palets</h1><span class="brandsub">Barra Danbo · Tremblay en NOR</span></div>
+    <div class="brandbar"><span class="logochip"><img src="img/nor.png" alt="NOR Logística y Comercialización"></span><div class="brandtitle"><h1 class="stencil">Palets</h1><span class="brandsub">Barra Danbo · Tremblay en NOR</span></div><span class="logochip"><img src="img/tremblay.png" alt="Lácteos Tremblay"></span></div>
     <nav class="tabs" id="tabs" role="tablist" aria-label="Secciones"></nav>
   </header>
   <main id="view"><p class="muted">Cargando…</p></main>
@@ -246,7 +260,7 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
     var g = document.getElementById('gate');
     if (!g) { g = document.createElement('div'); g.id = 'gate'; g.className = 'gate'; document.body.appendChild(g); }
     g.hidden = false;
-    g.innerHTML = '<form class="gatebox" id="gate-form"><h2>Palets Barra Danbo</h2>' +
+    g.innerHTML = '<form class="gatebox" id="gate-form"><img class="gatelogo" src="img/nor.png" alt="NOR"><h2>Palets Barra Danbo</h2>' +
       (fatal ? '' : '<p class="muted">Ingresá la clave de acceso.</p><div class="field"><label for="gate-clave">Clave</label><input type="password" id="gate-clave" autocomplete="current-password"></div>') +
       '<p class="gatemsg" role="alert"></p>' + (fatal ? '' : '<button class="btn" type="submit">Entrar</button>') + '</form>';
     g.querySelector('.gatemsg').textContent = msg || '';
