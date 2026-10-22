@@ -141,6 +141,9 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px
 .num small { font-size: 14px; font-weight: 600; color: var(--ink2); margin-right: 4px; letter-spacing: .1em; }
 .bar { height: 10px; border-radius: 2px; background: var(--surface2); border: 1px solid var(--line); overflow: hidden; }
 .bar i { display: block; height: 100%; background: var(--cheese); }
+.bar.est-sin i { background: #2E9E5B; }
+.bar.est-abierto i { background: #F28C1B; }
+.bar.est-cerrado i, .bar.est-negativo i { background: #D63A2F; }
 .pal .big { font-size: 13px; color: var(--ink2); }
 .pal .big b { font-family: var(--f-display); font-size: 28px; color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; margin-right: 2px; }
 .pal .kg { font-family: var(--f-mono); font-size: 13px; font-variant-numeric: tabular-nums; }
@@ -887,7 +890,7 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
     var chip = { cerrado: ['Despachado', 'muted'], sin: ['Sin salidas', 'ok'], abierto: ['Abierto', 'info'], negativo: ['Saldo negativo', 'bad'] }[r.estado];
     return '<article class="pal' + (r.alerts.length ? ' has-alert' : '') + '">' +
       '<header><span class="num"><small>N°</small>' + esc(r.p.num) + '</span><span class="chip ' + chip[1] + '">' + chip[0] + '</span></header>' +
-      '<div class="bar" role="img" aria-label="' + fmtN(r.saldo) + ' de ' + fmtN(r.ini) + ' cajas"><i style="width:' + pct + '%"></i></div>' +
+      '<div class="bar est-' + r.estado + '" role="img" aria-label="' + fmtN(r.saldo) + ' de ' + fmtN(r.ini) + ' cajas"><i style="width:' + (r.estado === 'cerrado' || r.estado === 'negativo' ? 100 : pct) + '%"></i></div>' +
       '<p class="big"><b>' + fmtN(r.saldo) + '</b> de ' + fmtN(r.ini) + ' cajas · ' + fmtN(r.saldo * P.unidCaja) + ' unidades</p>' +
       '<p class="kg">' + (r.kSaldo === null ? 'Sin kilos cargados' : fmtKg(r.kSaldo) + ' en el palet') + '</p>' +
       clientesHtml(r.p.id) +
