@@ -522,7 +522,7 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
   var KEYS = {
     cliente: /cliente|raz[oó]n|destinatario|nombre/i,
     palet: /pal{1,2}e?t/i,
-    unidades: /unid|barra/i,
+    unidades: /unid|barra|cantidad/i,
     cajas: /caja|bulto/i,
     kilos: /kilo|\bkg\b/i,
     producto: /producto|art[ií]culo|descrip|detalle/i
@@ -593,10 +593,11 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
         if (best) { paletId = best.p.id; paletNum = best.p.num; }
         else { paletNum = pal; fijoSin = true; nota = 'Palet no cargado'; }
       }
-      out.push({ cliente: cli, cajas: caj, unidades: uni, kilos: null, paletId: paletId, paletNum: paletNum, confirmada: false, salidaId: null, sugerido: false, nota: nota, fijoSin: fijoSin, paletTexto: pal });
+      out.push({ cliente: cli, cajas: caj, unidades: uni, kilos: (kg !== null && kg > 0) ? kg : null, paletId: paletId, paletNum: paletNum, confirmada: false, salidaId: null, sugerido: false, nota: nota, fijoSin: fijoSin, paletTexto: pal });
     }
     return out;
   }
+  function kProp(l, n) { return (l.kilos != null && l.cajas > 0) ? Math.round(l.kilos * n / l.cajas * 100) / 100 : null; }
   function sugerir(lines) {
     var D = derive(), P = state.params, avail = {}, out = [];
     D.rows.forEach(function (r) { avail[r.p.id] = r.saldo - r.comp; });
@@ -617,10 +618,10 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
         if (a > 0) {
           var take = Math.min(a, need);
           avail[r.p.id] -= take; need -= take;
-          out.push(Object.assign({}, l, { cajas: take, unidades: take * P.unidCaja, paletId: r.p.id, paletNum: r.p.num, sugerido: true, nota: 'Dividida entre palets' }));
+          out.push(Object.assign({}, l, { cajas: take, unidades: take * P.unidCaja, kilos: kProp(l, take), paletId: r.p.id, paletNum: r.p.num, sugerido: true, nota: 'Dividida entre palets' }));
         }
       });
-      if (need > 0) out.push(Object.assign({}, l, { cajas: need, unidades: need * P.unidCaja, paletId: null, paletNum: '', nota: 'No alcanza el stock' }));
+      if (need > 0) out.push(Object.assign({}, l, { cajas: need, unidades: need * P.unidCaja, kilos: kProp(l, need), paletId: null, paletNum: '', nota: 'No alcanza el stock' }));
     });
     return out.map(function (l, i) { var c = Object.assign({}, l, { id: 'l' + i }); delete c.fijoSin; return c; });
   }
@@ -999,7 +1000,7 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
       (imp.names.length > 1 ? '<div class="field"><label for="m-sheet">Hoja</label><select id="m-sheet" data-bind="imp.sheet">' + imp.names.map(function (n) { return '<option' + (n === imp.sheet ? ' selected' : '') + ' value="' + esc(n) + '">' + esc(n) + '</option>'; }).join('') + '</select></div>' : '') +
       '<div class="field"><label for="m-hr">Fila de encabezados</label><input type="number" min="1" id="m-hr" data-bind="imp.headerRow" value="' + (imp.headerRow + 1) + '"></div>' +
       '<div class="field"><label for="m-fecha">Fecha del pedido</label><input type="date" id="m-fecha" data-bind="imp.fechaPedido" value="' + esc(imp.fechaPedido) + '"></div></div>' +
-      '<p class="lbl">Qué es cada columna</p><div class="row">' + sel('cliente', 'Cliente') + sel('palet', 'Palet') + sel('cajas', 'Cajas') + sel('unidades', 'Unidades') + sel('kilos', 'Kilos (solo para estimar)') + sel('producto', 'Producto (filtro)') + '</div>' +
+      '<p class="lbl">Qué es cada columna</p><div class="row">' + sel('cliente', 'Cliente') + sel('palet', 'Palet') + sel('cajas', 'Cajas') + sel('unidades', 'Unidades') + sel('kilos', 'Kilos') + sel('producto', 'Producto (filtro)') + '</div>' +
       (m.producto >= 0 ? '<div class="field" style="max-width:260px"><label for="m-filtro">Solo filas que contengan</label><input type="text" id="m-filtro" data-bind="imp.filtro" value="' + esc(imp.filtro) + '" placeholder="danbo"></div>' : '') +
       '<div>' + (lines.length ? '<p><b>' + lines.length + '</b> líneas · <b>' + fmtN(tc, 1) + '</b> cajas · <b>' + fmtN(tu) + '</b> unidades' + (sinPal ? ' · ' + sinPal + ' sin palet en el Excel (se sugiere uno)' : '') + '</p>' : '<p class="muted">No se detectaron líneas. Revisá la fila de encabezados y las columnas.</p>') + '</div>' +
       (lines.length ? '<div class="tw"><table><thead><tr><th>Cliente</th><th>Palet en Excel</th><th class="n">Cajas</th><th class="n">Unidades</th></tr></thead><tbody>' +
