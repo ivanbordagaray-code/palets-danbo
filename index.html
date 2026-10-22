@@ -920,8 +920,7 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
       stat('Palets en depósito', fmtN(T.conSaldo), 'de ' + fmtN(state.palets.length) + ' ingresados') +
       stat('Cajas en cámara', fmtN(T.cajas), fmtN(T.unidades) + ' unidades') +
       stat('Kilos en cámara', T.kilosN ? fmtN(T.kilos, 1) : '—', T.sinKilos ? T.sinKilos + ' palets sin kilos cargados' : 'ingresado menos pesado') +
-      stat('Kilos despachados', fmtN(T.kilosDesp, 1), fmtN(T.cajasDesp, 1) + ' cajas · ' + fmtN(T.unidDesp) + ' unidades') +
-      stat('Por pesar', fmtN(T.comp), 'cajas en pedidos pendientes') + '</section>' +
+      stat('Kilos despachados', fmtN(T.kilosDesp, 1), fmtN(T.cajasDesp, 1) + ' cajas · ' + fmtN(T.unidDesp) + ' unidades') + '</section>' +
       alertsBlock(D) +
       '<section><div class="sechead"><h2>Palets</h2><div class="seg" role="group" aria-label="Filtro">' +
       [['saldo', 'En depósito'], ['cerrado', 'Despachados'], ['todos', 'Todos']].map(function (f) { return '<button data-act="filtro" data-v="' + f[0] + '" aria-pressed="' + (state.filtro === f[0]) + '">' + f[1] + '</button>'; }).join('') +
