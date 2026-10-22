@@ -202,6 +202,25 @@ details.panel summary { cursor: pointer; font-family: var(--f-display); font-siz
 .gatebox h2 { font-family: var(--f-display); font-size: 28px; text-transform: uppercase; letter-spacing: .04em; margin: 0; }
 .gatemsg { color: var(--bad); min-height: 1.2em; margin: 0; }
 .acts { display: flex; gap: 6px; flex-wrap: wrap; }
+/* celular: fecha sin desborde y tablas como tarjetas */
+input[type="date"] { -webkit-appearance: none; appearance: none; width: 100%; max-width: 100%; min-width: 0; min-height: 40px; display: block; text-align: left; }
+input[type="date"]::-webkit-date-and-time-value { text-align: left; }
+@media (max-width: 640px) {
+  .sechead input.srch, .sechead > .btn { width: 100% !important; }
+  .rt.tw { overflow: visible; border: 0; background: none; }
+  .rt table { display: block; min-width: 0; }
+  .rt thead { display: none; }
+  .rt tbody, .rt tfoot { display: block; }
+  .rt tr { display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; }
+  .rt td { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; border: 0; padding: 3px 0; text-align: right; }
+  .rt td[data-label]::before { content: attr(data-label); color: var(--ink2); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; text-align: left; flex: none; }
+  .rt td[data-label=""]::before { display: none; }
+  .rt td.first { order: -1; display: block; text-align: left; font-weight: 600; padding-bottom: 6px; margin-bottom: 4px; border-bottom: 1px solid var(--line); }
+  .rt td.first::before { display: none; }
+  .rt td:empty { display: none; }
+  .rt tfoot tr { background: var(--surface2); }
+  .rt td.n, .rt td.mono { font-size: 13px; }
+}
 @media (prefers-reduced-motion: no-preference) { .bar i { transition: width .25s ease; } }
 </style>
 </head>
@@ -244,7 +263,7 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
     return fetch(CFG.API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) })
       .then(function (r) { return r.json(); })
       .then(function (j) {
-        if (j && j.ok) return j.result;
+        if (j && j.ok) { if (j.role) window.PALETS_ROLE = j.role; return j.result; }
         var e = (j && j.error) || 'error';
         throw { code: e === 'clave' ? 'clave' : 'unavailable', message: e };
       }, function (e) {
@@ -432,6 +451,7 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
   function fdate(iso) { if (!iso) return '—'; var p = String(iso).split('-'); return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : String(iso); }
   function fmtN(n, d) { if (n === null || n === undefined || isNaN(n)) return '—'; return Number(n).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: d || 0 }); }
   function fmtKg(n) { return (n === null || n === undefined || isNaN(n)) ? '—' : Number(n).toLocaleString('es-AR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' kg'; }
+  function esAdmin() { return window.PALETS_ROLE !== 'control'; }
   function parseNum(v) {
     if (v === null || v === undefined || v === '') return null;
     if (typeof v === 'number') return isFinite(v) ? v : null;
@@ -897,8 +917,8 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
       (r.comp ? '<p class="hold">' + fmtN(r.comp) + ' cajas en pedidos pendientes</p>' : '') +
       r.alerts.map(function (a) { return '<p class="al ' + a.n + '">' + esc(a.t) + '</p>'; }).join('') +
       '<footer>Remito ' + esc(r.p.remito || '—') + ' · ingresó ' + fdate(r.p.fecha) + '</footer>' +
-      '<div class="acts"><button class="btn sec sm" data-act="pal-edit" data-id="' + r.p.id + '">Editar</button>' +
-      '<button class="btn danger sm' + (state.confirmDel === 'pd' + r.p.id ? ' armed' : '') + '" data-act="pal-del" data-id="' + r.p.id + '">' + (state.confirmDel === 'pd' + r.p.id ? 'Confirmar: eliminar' : 'Eliminar') + '</button></div></article>';
+      (esAdmin() ? '<div class="acts"><button class="btn sec sm" data-act="pal-edit" data-id="' + r.p.id + '">Editar</button>' +
+      '<button class="btn danger sm' + (state.confirmDel === 'pd' + r.p.id ? ' armed' : '') + '" data-act="pal-del" data-id="' + r.p.id + '">' + (state.confirmDel === 'pd' + r.p.id ? 'Confirmar: eliminar' : 'Eliminar') + '</button></div>' : '') + '</article>';
   }
   function listaPalets(D) {
     var q = state.q.trim().toLowerCase();
@@ -924,12 +944,12 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
       alertsBlock(D) +
       '<section><div class="sechead"><h2>Palets</h2><div class="seg" role="group" aria-label="Filtro">' +
       [['saldo', 'En depósito'], ['cerrado', 'Despachados'], ['todos', 'Todos']].map(function (f) { return '<button data-act="filtro" data-v="' + f[0] + '" aria-pressed="' + (state.filtro === f[0]) + '">' + f[1] + '</button>'; }).join('') +
-      '</div><input type="search" id="q" data-bind="q" placeholder="Buscar palet o remito" value="' + esc(state.q) + '" style="width:220px" aria-label="Buscar palet o remito"></div><div class="grid" id="lista">' + listaPalets(D) + '</div></section>' +
+      '</div><input type="search" id="q" data-bind="q" placeholder="Buscar palet o remito" value="' + esc(state.q) + '" class="srch" style="width:220px" aria-label="Buscar palet o remito"></div><div class="grid" id="lista">' + listaPalets(D) + '</div></section>' +
       '<details class="panel"' + (state.paramsOpen ? ' open' : '') + ' id="pdet"><summary>Parámetros de control</summary><div class="pgrid">' +
       pfield('cajasPalet', 'Cajas por palet', P.cajasPalet) + pfield('unidCaja', 'Unidades por caja', P.unidCaja) + pfield('kgCaja', 'Kilos por caja (aprox.)', P.kgCaja) + pfield('tolKg', 'Tolerancia de peso por caja (%)', P.tolKg) + pfield('difKilos', 'Diferencia de kilos tolerada (kg)', P.difKilos) +
       '</div></details>';
   }
-  function pfield(k, l, v) { return '<div class="field"><label for="p-' + k + '">' + esc(l) + '</label><input type="number" step="any" id="p-' + k + '" data-param="' + k + '" value="' + esc(v) + '"></div>'; }
+  function pfield(k, l, v) { return '<div class="field"><label for="p-' + k + '">' + esc(l) + '</label><input type="number" step="any" id="p-' + k + '" data-param="' + k + '" value="' + esc(v) + '"' + (esAdmin() ? '' : ' disabled') + '></div>'; }
 
   function renderIngreso(D) {
     var ing = state.ing;
@@ -950,12 +970,12 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
     }
     html += '</section>';
     var rem = state.remitos.slice().sort(function (a, b) { return String(b.creado).localeCompare(String(a.creado)); }).slice(0, 10);
-    html += '<section><div class="sechead"><h2>Remitos recientes</h2></div>' + (rem.length ? '<div class="tw"><table><thead><tr><th>Fecha</th><th>Remito</th><th class="n">Palets</th><th class="n">Kilos remito</th><th class="n">Kilos en palets</th></tr></thead><tbody>' +
+    html += '<section><div class="sechead"><h2>Remitos recientes</h2></div>' + (rem.length ? '<div class="tw rt"><table><thead><tr><th>Fecha</th><th>Remito</th><th class="n">Palets</th><th class="n">Kilos remito</th><th class="n">Kilos en palets</th></tr></thead><tbody>' +
       rem.map(function (r) {
         var mine = state.palets.filter(function (p) { return String(p.remito) === String(r.remito); });
         var k = mine.filter(function (p) { return p.kilosIngreso != null; }).reduce(function (a, p) { return a + Number(p.kilosIngreso); }, 0);
         var anyK = mine.some(function (p) { return p.kilosIngreso != null; });
-        return '<tr><td>' + fdate(r.fecha) + '</td><td class="mono">' + esc(r.remito) + '</td><td class="n">' + mine.length + (Number(r.palets) && Number(r.palets) !== mine.length ? ' de ' + fmtN(r.palets) : '') + '</td><td class="n">' + (r.kilos != null ? fmtKg(Number(r.kilos)) : '—') + '</td><td class="n">' + (anyK ? fmtKg(k) : '—') + '</td></tr>';
+        return '<tr><td data-label="Fecha">' + fdate(r.fecha) + '</td><td class="mono first" data-label="Remito">' + esc(r.remito) + '</td><td class="n" data-label="Palets">' + mine.length + (Number(r.palets) && Number(r.palets) !== mine.length ? ' de ' + fmtN(r.palets) : '') + '</td><td class="n" data-label="Kilos remito">' + (r.kilos != null ? fmtKg(Number(r.kilos)) : '—') + '</td><td class="n" data-label="Kilos en palets">' + (anyK ? fmtKg(k) : '—') + '</td></tr>';
       }).join('') + '</tbody></table></div>' : '<p class="muted">Todavía no cargaste remitos.</p>') + '</section>';
     return html;
   }
@@ -1002,12 +1022,12 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
     var key = 'pb' + ped.id;
     var pend = ls.some(function (l) { return !l.confirmada && parseNum(l.kilos) > 0 && l.paletId; });
     return '<section class="panel"><div class="pedhead"><h3>Pedido del ' + fdate(ped.fecha) + '</h3><span class="chip ' + (ped.estado === 'pesado' ? 'ok' : 'info') + '">' + done + ' de ' + ls.length + ' pesadas</span>' +
-      '<span class="muted">' + esc(ped.archivo || '') + (ped.hoja ? ' · ' + esc(ped.hoja) : '') + ' · ' + fmtN(tc, 1) + ' cajas</span></div>' +
+      '<span class="muted">' + esc(nombresPedidos()[ped.id] || ped.archivo || '') + (ped.hoja ? ' · ' + esc(ped.hoja) : '') + ' · ' + fmtN(tc, 1) + ' cajas</span></div>' +
       '<div class="tw"><table><thead><tr><th>Cliente</th><th>Palet</th><th class="n">Cajas</th><th class="n">Unidades</th><th class="n">Kilos pesados</th><th></th></tr></thead><tbody>' +
       ls.map(function (l, i) { return lineaRow(D, ped, l, i); }).join('') + '</tbody></table></div>' +
       '<div class="row"><button class="btn" data-act="ped-conf-todas" data-ped="' + ped.id + '"' + (pend ? '' : ' disabled') + '>Cargar todas las pesadas</button>' +
       (state.dl ? '<button class="btn sec" data-act="ped-exportar" data-ped="' + ped.id + '">Exportar Excel con kilos</button>' : '') +
-      '<button class="btn danger' + (state.confirmDel === key ? ' armed' : '') + '" data-act="ped-borrar" data-ped="' + ped.id + '">' + (state.confirmDel === key ? 'Confirmar: eliminar pedido' : 'Eliminar pedido') + '</button></div></section>';
+      (esAdmin() ? '<button class="btn danger' + (state.confirmDel === key ? ' armed' : '') + '" data-act="ped-borrar" data-ped="' + ped.id + '">' + (state.confirmDel === key ? 'Confirmar: eliminar pedido' : 'Eliminar pedido') + '</button>' : '') + '</div></section>';
   }
   function importBlock() {
     var imp = state.imp, m = imp.map;
@@ -1041,13 +1061,35 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
     if (!peds.length && !state.imp) html += '<p class="lead">Cuando Tremblay mande el Excel con los clientes que compraron Barra Danbo, subilo acá. Después pesás cada línea y los kilos se descuentan de cada palet.</p>';
     if (pend.length) html += pend.map(function (p) { return pedidoCard(D, p); }).join('');
     if (hechos.length) {
-      html += '<section><div class="sechead"><h2>Pedidos pesados</h2></div><div class="tw"><table><thead><tr><th>Fecha</th><th>Archivo</th><th class="n">Líneas</th><th class="n">Kilos</th><th></th></tr></thead><tbody>' +
+      var NP = nombresPedidos();
+      html += '<section><div class="sechead"><h2>Pedidos pesados</h2></div><div class="tw rt"><table><thead><tr><th>Archivo</th><th>Fecha</th><th class="n">Líneas</th><th class="n">Kilos</th><th></th></tr></thead><tbody>' +
         hechos.map(function (p) {
           var kg = (p.lineas || []).reduce(function (a, l) { return a + (parseNum(l.kilos) || 0); }, 0);
-          return '<tr><td>' + fdate(p.fecha) + '</td><td>' + esc(p.archivo || '') + '</td><td class="n">' + (p.lineas || []).length + '</td><td class="n">' + fmtKg(kg) + '</td><td>' + (state.dl ? '<button class="btn sec sm" data-act="ped-exportar" data-ped="' + p.id + '">Exportar Excel</button>' : '') + '</td></tr>';
+          return '<tr><td class="first" data-label="Archivo">' + esc(NP[p.id] || p.archivo || '') + '</td><td data-label="Fecha">' + fdate(p.fecha) + '</td><td class="n" data-label="Líneas">' + (p.lineas || []).length + '</td><td class="n" data-label="Kilos">' + fmtKg(kg) + '</td><td data-label="">' + (state.dl ? '<button class="btn sec sm" data-act="ped-exportar" data-ped="' + p.id + '">Exportar Excel</button>' : '') + '</td></tr>';
         }).join('') + '</tbody></table></div></section>';
     }
     return html;
+  }
+  function nombreBase(p) {
+    var f = String(p.archivo || '').replace(/\.(xlsx|xlsm|xls|csv)$/i, '').replace(/(\s*\(\d+\))+\s*$/, '').replace(/_/g, ' ').trim();
+    var yy = String(p.fecha || '').slice(0, 4) || String(new Date().getFullYear());
+    var m = f.match(/(\d{1,2})\s*[-\/.]\s*(\d{1,2})(?:\s*[-\/.]\s*(\d{2,4}))?/), fecha = '', txt = f;
+    if (m) {
+      var yr = m[3] ? (m[3].length === 2 ? '20' + m[3] : m[3]) : yy;
+      fecha = ('0' + m[1]).slice(-2) + '/' + ('0' + m[2]).slice(-2) + '/' + yr;
+      txt = f.slice(0, m.index);
+    } else if (p.fecha) { fecha = fdate(p.fecha); }
+    txt = txt.replace(/[\s\-]+$/, '').replace(/\s+/g, ' ');
+    txt = txt.toLowerCase().replace(/(^|\s)([a-záéíóúñü])/g, function (x, a, b) { return a + b.toUpperCase(); });
+    return (txt + ' ' + fecha).trim() || 'Pedido';
+  }
+  function nombresPedidos() {
+    var orden = state.pedidos.slice().sort(function (a, b) { return String(a.creado || '').localeCompare(String(b.creado || '')); }), cuenta = {}, out = {};
+    orden.forEach(function (p) {
+      var b = nombreBase(p); cuenta[b] = (cuenta[b] || 0) + 1;
+      out[p.id] = cuenta[b] > 1 ? b + ' (' + cuenta[b] + ')' : b;
+    });
+    return out;
   }
   function agruparClientes() {
     var q = state.hq.trim().toLowerCase(), m = {};
@@ -1066,9 +1108,9 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
     if (!list.length) return '<p class="muted">No hay salidas para mostrar.</p>';
     var tc = 0, tu = 0, tk = 0;
     list.forEach(function (g) { tc += g.cajas; tu += g.unidades; tk += g.kilos; });
-    return '<div class="tw"><table><thead><tr><th>Cliente</th><th>Palets</th><th class="n">Cajas</th><th class="n">Unidades</th><th class="n">Kilos</th></tr></thead><tbody>' +
-      list.map(function (g) { return '<tr><td>' + esc(g.cliente) + '</td><td class="mono">' + esc(g.palets.join(', ')) + '</td><td class="n">' + fmtN(g.cajas, 1) + '</td><td class="n">' + fmtN(g.unidades) + '</td><td class="n">' + fmtKg(g.kilos) + '</td></tr>'; }).join('') +
-      '</tbody><tfoot><tr><td colspan="2">Total (' + list.length + ' clientes)</td><td class="n">' + fmtN(tc, 1) + '</td><td class="n">' + fmtN(tu) + '</td><td class="n">' + fmtKg(tk) + '</td></tr></tfoot></table></div>';
+    return '<div class="tw rt"><table><thead><tr><th>Cliente</th><th>Palets</th><th class="n">Cajas</th><th class="n">Unidades</th><th class="n">Kilos</th></tr></thead><tbody>' +
+      list.map(function (g) { return '<tr><td class="first" data-label="Cliente">' + esc(g.cliente) + '</td><td class="mono" data-label="Palets">' + esc(g.palets.join(', ')) + '</td><td class="n" data-label="Cajas">' + fmtN(g.cajas, 1) + '</td><td class="n" data-label="Unidades">' + fmtN(g.unidades) + '</td><td class="n" data-label="Kilos">' + fmtKg(g.kilos) + '</td></tr>'; }).join('') +
+      '</tbody><tfoot><tr><td colspan="2" class="first">Total (' + list.length + ' clientes)</td><td class="n" data-label="Cajas">' + fmtN(tc, 1) + '</td><td class="n" data-label="Unidades">' + fmtN(tu) + '</td><td class="n" data-label="Kilos">' + fmtKg(tk) + '</td></tr></tfoot></table></div>';
   }
   function exportClientes(list) {
     var rows = [['Cliente', 'Palets', 'Cajas', 'Unidades', 'Kilos']];
@@ -1084,16 +1126,16 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
     if (!list.length) return '<p class="muted">No hay salidas para mostrar.</p>';
     var P = state.params, tc = 0, tu = 0, tk = 0;
     list.forEach(function (s) { tc += Number(s.cajas) || 0; tu += Number(s.unidades) || 0; tk += Number(s.kilos) || 0; });
-    return '<div class="tw"><table><thead><tr><th>Fecha</th><th>Cliente</th><th>Palet</th><th class="n">Cajas</th><th class="n">Unidades</th><th class="n">Kilos</th><th class="n">Kg/caja</th><th></th></tr></thead><tbody>' +
+    return '<div class="tw rt"><table><thead><tr><th>Fecha</th><th>Cliente</th><th>Palet</th><th class="n">Cajas</th><th class="n">Unidades</th><th class="n">Kilos</th><th class="n">Kg/caja</th><th></th></tr></thead><tbody>' +
       list.slice(0, 300).map(function (s) {
         var al = salAlerts(s, P), key = 'sal' + s.id, pc = Number(s.cajas) > 0 ? Number(s.kilos) / Number(s.cajas) : null;
-        return '<tr><td>' + fdate(s.fecha) + '</td><td>' + esc(s.cliente || '—') + (al.length ? '<div class="hint">' + al.map(function (t) { return '<span class="chip warn">' + esc(t) + '</span>'; }).join('') + '</div>' : '') + '</td><td class="mono">N° ' + esc(s.paletNum) + '</td><td class="n">' + fmtN(s.cajas, 1) + '</td><td class="n">' + fmtN(s.unidades) + '</td><td class="n">' + fmtKg(Number(s.kilos)) + '</td><td class="n">' + fmtN(pc, 1) + '</td><td><button class="btn danger sm' + (state.confirmDel === key ? ' armed' : '') + '" data-act="sal-anular" data-id="' + s.id + '">' + (state.confirmDel === key ? 'Confirmar' : 'Anular') + '</button></td></tr>';
-      }).join('') + '</tbody><tfoot><tr><td colspan="3">Total (' + list.length + ' salidas)</td><td class="n">' + fmtN(tc, 1) + '</td><td class="n">' + fmtN(tu) + '</td><td class="n">' + fmtKg(tk) + '</td><td colspan="2"></td></tr></tfoot></table></div>';
+        return '<tr><td data-label="Fecha">' + fdate(s.fecha) + '</td><td class="first" data-label="Cliente">' + esc(s.cliente || '—') + (al.length ? '<div class="hint">' + al.map(function (t) { return '<span class="chip warn">' + esc(t) + '</span>'; }).join('') + '</div>' : '') + '</td><td class="mono" data-label="Palet">N° ' + esc(s.paletNum) + '</td><td class="n" data-label="Cajas">' + fmtN(s.cajas, 1) + '</td><td class="n" data-label="Unidades">' + fmtN(s.unidades) + '</td><td class="n" data-label="Kilos">' + fmtKg(Number(s.kilos)) + '</td><td class="n" data-label="Kg/caja">' + fmtN(pc, 1) + '</td><td data-label="">' + (esAdmin() ? '<button class="btn danger sm' + (state.confirmDel === key ? ' armed' : '') + '" data-act="sal-anular" data-id="' + s.id + '">' + (state.confirmDel === key ? 'Confirmar' : 'Anular') + '</button>' : '') + '</td></tr>';
+      }).join('') + '</tbody><tfoot><tr><td colspan="3" class="first">Total (' + list.length + ' salidas)</td><td class="n" data-label="Cajas">' + fmtN(tc, 1) + '</td><td class="n" data-label="Unidades">' + fmtN(tu) + '</td><td class="n" data-label="Kilos">' + fmtKg(tk) + '</td><td colspan="2"></td></tr></tfoot></table></div>';
   }
   function renderHistorial() {
     return '<section><div class="sechead"><h2>' + (state.histView === 'cliente' ? 'Kilos por cliente' : 'Salidas pesadas') + '</h2><div class="seg" role="group" aria-label="Vista">' +
       [['salida', 'Por salida'], ['cliente', 'Por cliente']].map(function (f) { return '<button data-act="hist-vista" data-v="' + f[0] + '" aria-pressed="' + (state.histView === f[0]) + '">' + f[1] + '</button>'; }).join('') +
-      '</div><input type="search" id="hq" data-bind="hq" placeholder="Buscar cliente o palet" value="' + esc(state.hq) + '" style="width:220px" aria-label="Buscar cliente o palet">' +
+      '</div><input type="search" id="hq" data-bind="hq" placeholder="Buscar cliente o palet" value="' + esc(state.hq) + '" class="srch" style="width:220px" aria-label="Buscar cliente o palet">' +
       (state.dl ? '<button class="btn sec" data-act="sal-exportar">Exportar Excel</button>' : '') + '</div><div id="hlista">' + listaHistorial() + '</div></section>';
   }
 
@@ -1143,9 +1185,11 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
     else if (a === 'ing-quitar') { state.ing.rows.splice(Number(d.i), 1); render(); }
     else if (a === 'ing-limpiar') { state.ing = newIng(); render(); }
     else if (a === 'ing-guardar') guardarIngreso();
+    else if (a === 'pal-edit' && !esAdmin()) { toast('Tu clave no permite esta acción.', 'bad'); }
     else if (a === 'pal-edit') { state.editPalet = d.id; render(); }
     else if (a === 'pal-cancel') { state.editPalet = null; render(); }
     else if (a === 'pal-save') guardarPalet(d.id);
+    else if (a === 'pal-del' && !esAdmin()) { toast('Tu clave no permite esta acción.', 'bad'); }
     else if (a === 'pal-del') confirmTwice('pd' + d.id, function () { borrarPalet(d.id); });
     else if (a === 'imp-armar') armarPedido();
     else if (a === 'imp-cancelar') { state.imp = null; render(); }
@@ -1155,7 +1199,9 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
       if (ped) confirmar(d.ped, ped.lineas.map(function (l, i) { return i; }).filter(function (i) { return !ped.lineas[i].confirmada && parseNum(ped.lineas[i].kilos) > 0; }));
     }
     else if (a === 'ped-exportar') exportPedido(d.ped);
+    else if (a === 'ped-borrar' && !esAdmin()) { toast('Tu clave no permite esta acción.', 'bad'); }
     else if (a === 'ped-borrar') confirmTwice('pb' + d.ped, function () { borrarPedido(d.ped); });
+    else if (a === 'sal-anular' && !esAdmin()) { toast('Tu clave no permite esta acción.', 'bad'); }
     else if (a === 'sal-anular') confirmTwice('sal' + d.id, function () { anularSalida(d.id); });
     else if (a === 'hist-vista') { state.histView = d.v; render(); }
     else if (a === 'sal-exportar') { if (state.histView === 'cliente') exportClientes(state._histCli || []); else exportSalidas(state._hist || []); }
