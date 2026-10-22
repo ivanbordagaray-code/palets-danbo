@@ -586,6 +586,13 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
       if (uni === null && caj !== null) uni = caj * P.unidCaja;
       if (caj === null && kg !== null && kg > 0) { caj = Math.round(kg / P.kgCaja); uni = caj * P.unidCaja; nota = 'Cajas estimadas por kilos'; }
       if (caj === null) continue;
+      if (m.kilos >= 0 && caj > 0) {
+        var okKg = function (v) { return v !== null && v > 0 && Math.abs(v / caj - P.kgCaja) <= P.kgCaja * (P.tolKg / 100); };
+        if (!okKg(kg)) {
+          var rawR = row[m.kilos + 1], mm = String(rawR == null ? '' : rawR).match(/^\s*(\d+(?:[.,]\d+)?)/), alt = mm ? parseNum(mm[1]) : null;
+          if (okKg(alt)) { kg = alt; nota = nota || 'Kilos tomados de la columna de la derecha'; }
+        }
+      }
       var paletId = null, paletNum = '', fijoSin = false;
       if (pal) {
         var cands = D.rows.filter(function (x) { return String(x.p.num) === pal; });
