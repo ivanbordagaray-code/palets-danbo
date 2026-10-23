@@ -1003,17 +1003,15 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
 
   function renderIngreso(D) {
     var ing = state.ing;
-    var html = '<section class="panel"><h3>Ingreso de camión</h3><p class="lead">Cargá el remito de Tremblay y la numeración que te anotaron en el papel. Los kilos por palet son opcionales: si todavía no los tenés, quedan vacíos.</p>' +
-      '<div class="row"><label class="btn sec" for="filein" style="cursor:pointer">Subir Excel de ingreso</label><span class="muted">Columnas: PALLET, KG, REMITO, FECHA. Se completa todo y revisás antes de guardar.</span></div><input type="file" id="filein" class="visually" accept=".xlsx,.xls,.csv">' +
-      '<div class="row">' +
-      '<div class="field"><label for="i-remito">Remito Nº</label><input type="text" id="i-remito" data-bind="ing.remito" value="' + esc(ing.remito) + '" autocomplete="off"></div>' +
-      '<div class="field"><label for="i-fecha">Fecha</label><input type="date" id="i-fecha" data-bind="ing.fecha" value="' + esc(ing.fecha) + '"></div>' +
-      '<div class="field"><label for="i-cant">Palets según remito</label><input type="number" id="i-cant" min="0" data-bind="ing.cant" value="' + esc(ing.cant) + '"></div>' +
-      '<div class="field"><label for="i-kilos">Kilos según remito</label><input type="text" inputmode="decimal" id="i-kilos" data-bind="ing.kilos" value="' + esc(ing.kilos) + '"></div></div>' +
-      '<div class="field"><label for="i-nums">Numeración de palets: rangos y comas (101-110, 115) o pegá dos columnas desde Excel (número y kilos)</label><textarea id="i-nums" data-bind="ing.nums" placeholder="101-110&#10;o: 1176 [tab] 918,26">' + esc(ing.nums) + '</textarea></div>' +
-      '<div><button class="btn" data-act="ing-armar">Armar lista de palets</button></div>';
-    if (ing.rows && ing.rows.length) {
-      html += '<div class="row"><div class="field" style="max-width:220px"><label for="i-kgt">Kilos por palet (igual para todos)</label><input type="text" inputmode="decimal" id="i-kgt" data-bind="ing.kgTodos" value="' + esc(ing.kgTodos) + '"></div><div><button class="btn sec" data-act="ing-kg-todos">Aplicar a todos</button></div></div>' +
+    var html = '<section class="panel"><h3>Ingreso de camión</h3>';
+    if (!(ing.rows && ing.rows.length)) {
+      html += '<label class="drop" for="filein"><b>Subí el Excel de ingreso</b><span class="muted">Tocá para elegirlo. Columnas: PALLET, KG, REMITO y FECHA. Revisás todo antes de guardar.</span></label>' +
+        '<input type="file" id="filein" class="visually" accept=".xlsx,.xls,.csv">';
+    } else {
+      html += '<p class="lead">' + ing.rows.length + ' palets' + (ing.kilos ? ' · ' + fmtKg(parseNum(ing.kilos)) : '') + '. Revisá los datos y guardá el ingreso.</p>' +
+        '<div class="row">' +
+        '<div class="field"><label for="i-remito">Remito Nº</label><input type="text" id="i-remito" data-bind="ing.remito" value="' + esc(ing.remito) + '" autocomplete="off"></div>' +
+        '<div class="field"><label for="i-fecha">Fecha</label><input type="date" id="i-fecha" data-bind="ing.fecha" value="' + esc(ing.fecha) + '"></div></div>' +
         '<div class="tw"><table><thead><tr><th>Palet</th><th class="n">Cajas</th><th class="n">Kilos (opcional)</th><th></th></tr></thead><tbody>' +
         ing.rows.map(function (r, i) { return '<tr><td><span class="mono">' + esc(r.num) + '</span></td><td class="n">' + state.params.cajasPalet + '</td><td class="n"><input class="kin" type="text" inputmode="decimal" aria-label="Kilos del palet ' + esc(r.num) + '" data-bind="ing.rows.' + i + '.kilos" value="' + esc(r.kilos) + '"></td><td><button class="btn sec sm" data-act="ing-quitar" data-i="' + i + '">Quitar</button></td></tr>'; }).join('') +
         '</tbody></table></div><div id="ingchecks">' + checksHtml(ingChecks()) + '</div>' +
