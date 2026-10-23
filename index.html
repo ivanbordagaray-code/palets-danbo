@@ -587,6 +587,56 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
     imp.headerRow = autoHeader(rows);
     imp.map = autoMap(rows[imp.headerRow]);
   }
+  function loadIngresoFile(file) {
+    if (typeof XLSX === 'undefined') { toast('No se pudo cargar el lector de Excel. Recargá la página.', 'bad'); return; }
+    file.arrayBuffer().then(function (buf) {
+      var wb = XLSX.read(buf, { type: 'array', cellDates: true }), rows = null;
+      for (var si = 0; si < wb.SheetNames.length && !rows; si++) {
+        var r = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[si]], { header: 1, raw: true, defval: '' });
+        if (r.some(function (row) { return row.some(function (c) { return /^\s*pal+e?t/i.test(String(c)); }); })) rows = r;
+      }
+      if (!rows) throw new Error('formato');
+      var hr = -1, cP = -1, cK = -1, cR = -1, cF = -1, i, j;
+      for (i = 0; i < rows.length && hr < 0; i++) {
+        for (j = 0; j < rows[i].length; j++) { if (/^\s*pal+e?t/i.test(String(rows[i][j]))) { hr = i; cP = j; break; } }
+      }
+      rows[hr].forEach(function (c, k) {
+        var t = String(c); if (k === cP) return;
+        if (cK < 0 && /kilo|\bkg\b/i.test(t)) cK = k;
+        else if (cR < 0 && /remito/i.test(t)) cR = k;
+        else if (cF < 0 && /fecha/i.test(t)) cF = k;
+      });
+      function fechaDe(v) {
+        if (v instanceof Date && !isNaN(v)) { var d = new Date(v.getTime() + 12 * 3600 * 1000); return d.toISOString().slice(0, 10); }
+        var m = String(v == null ? '' : v).match(/(\d{1,2})\s*[-\/.]\s*(\d{1,2})(?:\s*[-\/.]\s*(\d{2,4}))?/);
+        if (!m) return '';
+        var yr = m[3] ? (m[3].length === 2 ? '20' + m[3] : m[3]) : String(today()).slice(0, 4);
+        return yr + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[1]).slice(-2);
+      }
+      var lines = [], tot = 0, remito = '', fecha = '', seen = {}, dup = 0;
+      for (i = hr + 1; i < rows.length; i++) {
+        var row = rows[i], num = String(row[cP] == null ? '' : row[cP]).trim();
+        if (cR >= 0 && !remito) { var rv = row[cR]; if (rv !== '' && rv != null && !fechaDe(rv)) remito = String(rv).trim(); }
+        if (cF >= 0 && !fecha) fecha = fechaDe(row[cF]);
+        if (cR >= 0 && !fecha) fecha = fechaDe(row[cR]);
+        if (!/^\d+$/.test(num)) continue;
+        if (seen[num]) { dup++; continue; }
+        seen[num] = true;
+        var kg = cK >= 0 ? parseNum(row[cK]) : null;
+        if (kg !== null) tot += kg;
+        lines.push(num + (kg !== null ? '\t' + (Math.round(kg * 100) / 100) : ''));
+      }
+      if (!lines.length) throw new Error('vacio');
+      var ing = newIng();
+      ing.remito = remito; if (fecha) ing.fecha = fecha;
+      ing.cant = String(lines.length); ing.kilos = tot ? String(Math.round(tot * 100) / 100) : '';
+      ing.nums = lines.join('\n');
+      var parsed = parseNumKg(ing.nums);
+      ing.rows = parsed.map(function (x) { return { num: x.num, kilos: x.kilos || '' }; });
+      state.ing = ing; state.tab = 'ingreso'; render();
+      toast('Excel leído: ' + lines.length + ' palets' + (remito ? ', remito ' + remito : ', sin remito (completalo)') + (dup ? ' · ' + dup + ' repetidos ignorados' : '') + '. Revisá y guardá.');
+    }).catch(function () { toast('No pude leer ese Excel. Tiene que tener las columnas PALLET y KG (y REMITO y FECHA).', 'bad'); });
+  }
   function loadFile(file) {
     if (typeof XLSX === 'undefined') { toast('No se pudo cargar el lector de Excel. Recargá la página.', 'bad'); return; }
     file.arrayBuffer().then(function (buf) {
@@ -954,6 +1004,7 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
   function renderIngreso(D) {
     var ing = state.ing;
     var html = '<section class="panel"><h3>Ingreso de camión</h3><p class="lead">Cargá el remito de Tremblay y la numeración que te anotaron en el papel. Los kilos por palet son opcionales: si todavía no los tenés, quedan vacíos.</p>' +
+      '<div class="row"><label class="btn sec" for="filein" style="cursor:pointer">Subir Excel de ingreso</label><span class="muted">Columnas: PALLET, KG, REMITO, FECHA. Se completa todo y revisás antes de guardar.</span></div><input type="file" id="filein" class="visually" accept=".xlsx,.xls,.csv">' +
       '<div class="row">' +
       '<div class="field"><label for="i-remito">Remito Nº</label><input type="text" id="i-remito" data-bind="ing.remito" value="' + esc(ing.remito) + '" autocomplete="off"></div>' +
       '<div class="field"><label for="i-fecha">Fecha</label><input type="date" id="i-fecha" data-bind="ing.fecha" value="' + esc(ing.fecha) + '"></div>' +
@@ -1229,6 +1280,7 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
   document.addEventListener('change', function (e) {
     var t = e.target, d = t.dataset || {};
     if (t.id === 'file' && t.files && t.files[0]) { loadFile(t.files[0]); t.value = ''; return; }
+    if (t.id === 'filein' && t.files && t.files[0]) { loadIngresoFile(t.files[0]); t.value = ''; return; }
     if (d.bind && d.bind.indexOf('imp.') === 0) {
       var imp = state.imp;
       if (!imp) return;
