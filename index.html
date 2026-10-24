@@ -451,7 +451,7 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
   function fdate(iso) { if (!iso) return '—'; var p = String(iso).split('-'); return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : String(iso); }
   function fmtN(n, d) { if (n === null || n === undefined || isNaN(n)) return '—'; return Number(n).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: d || 0 }); }
   function fmtKg(n) { return (n === null || n === undefined || isNaN(n)) ? '—' : Number(n).toLocaleString('es-AR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' kg'; }
-  function esAdmin() { return window.PALETS_ROLE !== 'control'; }
+  function esAdmin() { return !window.PALETS_ROLE || window.PALETS_ROLE === 'admin'; }
   function parseNum(v) {
     if (v === null || v === undefined || v === '') return null;
     if (typeof v === 'number') return isFinite(v) ? v : null;
@@ -1213,7 +1213,8 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
     var D = derive(); state.D = D;
     var pl = 0;
     state.pedidos.forEach(function (p) { if (p.estado !== 'pesado') pl += (p.lineas || []).filter(function (l) { return !l.confirmada; }).length; });
-    $('#tabs').innerHTML = TABS.map(function (t) {
+    if (!esAdmin() && (state.tab === 'ingreso' || state.tab === 'pedido')) state.tab = 'tablero';
+    $('#tabs').innerHTML = TABS.filter(function (t) { return esAdmin() || t[0] === 'tablero' || t[0] === 'historial'; }).map(function (t) {
       var c = t[0] === 'tablero' && D.alerts.length ? '<span class="count bad">' + D.alerts.length + '</span>' : t[0] === 'pedido' && pl ? '<span class="count">' + pl + '</span>' : '';
       return '<button class="tab" role="tab" data-act="tab" data-v="' + t[0] + '" aria-selected="' + (state.tab === t[0]) + '">' + t[1] + c + '</button>';
     }).join('');
@@ -1248,11 +1249,11 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
     else if (a === 'ing-quitar') { state.ing.rows.splice(Number(d.i), 1); render(); }
     else if (a === 'ing-limpiar') { state.ing = newIng(); render(); }
     else if (a === 'ing-guardar') guardarIngreso();
-    else if (a === 'pal-edit' && !esAdmin()) { toast('Tu clave no permite esta acción.', 'bad'); }
+    else if (a === 'pal-edit' && !esAdmin()) { toast('Esta clave es solo para mirar.', 'bad'); }
     else if (a === 'pal-edit') { state.editPalet = d.id; render(); }
     else if (a === 'pal-cancel') { state.editPalet = null; render(); }
     else if (a === 'pal-save') guardarPalet(d.id);
-    else if (a === 'pal-del' && !esAdmin()) { toast('Tu clave no permite esta acción.', 'bad'); }
+    else if (a === 'pal-del' && !esAdmin()) { toast('Esta clave es solo para mirar.', 'bad'); }
     else if (a === 'pal-del') confirmTwice('pd' + d.id, function () { borrarPalet(d.id); });
     else if (a === 'imp-armar') armarPedido();
     else if (a === 'imp-cancelar') { state.imp = null; render(); }
@@ -1262,7 +1263,7 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
       if (ped) confirmar(d.ped, ped.lineas.map(function (l, i) { return i; }).filter(function (i) { return !ped.lineas[i].confirmada && parseNum(ped.lineas[i].kilos) > 0; }));
     }
     else if (a === 'ped-exportar') exportPedido(d.ped);
-    else if (a === 'ped-borrar' && !esAdmin()) { toast('Tu clave no permite esta acción.', 'bad'); }
+    else if (a === 'ped-borrar' && !esAdmin()) { toast('Esta clave es solo para mirar.', 'bad'); }
     else if (a === 'ped-borrar') confirmTwice('pb' + d.ped, function () { borrarPedido(d.ped); });
     else if (a === 'sal-edit' && esAdmin()) { state.editSal = d.id; render(); setTimeout(function () { var i = document.getElementById('es-kg'); if (i) { i.focus(); i.select(); } }, 0); }
     else if (a === 'sal-edit-cancel') { state.editSal = null; render(); }
@@ -1271,7 +1272,7 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
       if (!(kg > 0)) { toast('Escribí los kilos pesados (un número mayor a 0).', 'bad'); return; }
       editarSalida(d.id, kg);
     }
-    else if (a === 'sal-anular' && !esAdmin()) { toast('Tu clave no permite esta acción.', 'bad'); }
+    else if (a === 'sal-anular' && !esAdmin()) { toast('Esta clave es solo para mirar.', 'bad'); }
     else if (a === 'sal-anular') confirmTwice('sal' + d.id, function () { anularSalida(d.id); });
     else if (a === 'hist-vista') { state.histView = d.v; render(); }
     else if (a === 'sal-exportar') { if (state.histView === 'cliente') exportClientes(state._histCli || []); else exportSalidas(state._hist || []); }
