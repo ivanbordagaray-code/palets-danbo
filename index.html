@@ -787,6 +787,20 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
       }, 'No se pudo anular.');
     });
   }
+  function editarSalida(id, kg) {
+    var s = state.salidas.filter(function (x) { return x.id === id; })[0];
+    if (!s) return;
+    return queue('sal' + id, function () {
+      return safe(function () {
+        return state.db.doc('salidas/' + id).update({ kilos: kg }).then(function () {
+          var ped = s.pedidoId && state.pedidos.filter(function (p) { return p.id === s.pedidoId; })[0];
+          if (!ped || !s.lineaId) return;
+          ped.lineas = (ped.lineas || []).map(function (l) { return l.id === s.lineaId ? Object.assign({}, l, { kilos: kg }) : l; });
+          return state.db.doc('pedidos/' + ped.id).update({ lineas: ped.lineas });
+        }).then(function () { state.editSal = null; toast('Kilos corregidos.'); render(); });
+      }, 'No se pudo guardar el cambio.');
+    });
+  }
   function borrarPedido(id) {
     var ped = state.pedidos.filter(function (p) { return p.id === id; })[0];
     if (!ped) return;
@@ -1178,7 +1192,7 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
     return '<div class="tw rt"><table><thead><tr><th>Fecha</th><th>Cliente</th><th>Palet</th><th class="n">Cajas</th><th class="n">Unidades</th><th class="n">Kilos</th><th class="n">Kg/caja</th><th></th></tr></thead><tbody>' +
       list.slice(0, 300).map(function (s) {
         var al = salAlerts(s, P), key = 'sal' + s.id, pc = Number(s.cajas) > 0 ? Number(s.kilos) / Number(s.cajas) : null;
-        return '<tr><td data-label="Fecha">' + fdate(s.fecha) + '</td><td class="first" data-label="Cliente">' + esc(s.cliente || '—') + (al.length ? '<div class="hint">' + al.map(function (t) { return '<span class="chip warn">' + esc(t) + '</span>'; }).join('') + '</div>' : '') + '</td><td class="mono" data-label="Palet">N° ' + esc(s.paletNum) + '</td><td class="n" data-label="Cajas">' + fmtN(s.cajas, 1) + '</td><td class="n" data-label="Unidades">' + fmtN(s.unidades) + '</td><td class="n" data-label="Kilos">' + fmtKg(Number(s.kilos)) + '</td><td class="n" data-label="Kg/caja">' + fmtN(pc, 1) + '</td><td data-label=""></td></tr>';
+        return '<tr><td data-label="Fecha">' + fdate(s.fecha) + '</td><td class="first" data-label="Cliente">' + esc(s.cliente || '—') + (al.length ? '<div class="hint">' + al.map(function (t) { return '<span class="chip warn">' + esc(t) + '</span>'; }).join('') + '</div>' : '') + '</td><td class="mono" data-label="Palet">N° ' + esc(s.paletNum) + '</td><td class="n" data-label="Cajas">' + fmtN(s.cajas, 1) + '</td><td class="n" data-label="Unidades">' + fmtN(s.unidades) + '</td><td class="n" data-label="Kilos">' + (state.editSal === s.id ? '<input class="kin" type="text" inputmode="decimal" id="es-kg" aria-label="Kilos corregidos" value="' + esc(s.kilos) + '">' : fmtKg(Number(s.kilos))) + '</td><td class="n" data-label="Kg/caja">' + fmtN(pc, 1) + '</td><td data-label="">' + (!esAdmin() ? '' : state.editSal === s.id ? '<button class="btn sm" data-act="sal-edit-save" data-id="' + s.id + '">Guardar</button> <button class="btn sec sm" data-act="sal-edit-cancel">Cancelar</button>' : '<button class="btn sec sm" data-act="sal-edit" data-id="' + s.id + '">Editar kilos</button>') + '</td></tr>';
       }).join('') + '</tbody><tfoot><tr><td colspan="3" class="first">Total (' + list.length + ' salidas)</td><td class="n" data-label="Cajas">' + fmtN(tc, 1) + '</td><td class="n" data-label="Unidades">' + fmtN(tu) + '</td><td class="n" data-label="Kilos">' + fmtKg(tk) + '</td><td colspan="2"></td></tr></tfoot></table></div>';
   }
   function renderHistorial() {
@@ -1250,6 +1264,13 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
     else if (a === 'ped-exportar') exportPedido(d.ped);
     else if (a === 'ped-borrar' && !esAdmin()) { toast('Tu clave no permite esta acción.', 'bad'); }
     else if (a === 'ped-borrar') confirmTwice('pb' + d.ped, function () { borrarPedido(d.ped); });
+    else if (a === 'sal-edit' && esAdmin()) { state.editSal = d.id; render(); setTimeout(function () { var i = document.getElementById('es-kg'); if (i) { i.focus(); i.select(); } }, 0); }
+    else if (a === 'sal-edit-cancel') { state.editSal = null; render(); }
+    else if (a === 'sal-edit-save' && esAdmin()) {
+      var inp = document.getElementById('es-kg'), kg = inp ? parseNum(inp.value) : null;
+      if (!(kg > 0)) { toast('Escribí los kilos pesados (un número mayor a 0).', 'bad'); return; }
+      editarSalida(d.id, kg);
+    }
     else if (a === 'sal-anular' && !esAdmin()) { toast('Tu clave no permite esta acción.', 'bad'); }
     else if (a === 'sal-anular') confirmTwice('sal' + d.id, function () { anularSalida(d.id); });
     else if (a === 'hist-vista') { state.histView = d.v; render(); }
