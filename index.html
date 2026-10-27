@@ -221,6 +221,9 @@ input[type="date"]::-webkit-date-and-time-value { text-align: left; }
   .rt tfoot tr { background: var(--surface2); }
   .rt td.n, .rt td.mono { font-size: 13px; }
 }
+.splitbox { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 200px; }
+.splitbox label { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink2); width: 100%; }
+.splitbox .kin { width: 72px; }
 @media (prefers-reduced-motion: no-preference) { .bar i { transition: width .25s ease; } }
 </style>
 </head>
@@ -1048,6 +1051,31 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
     return '<select data-lpalet data-ped="' + ped.id + '" data-i="' + i + '" aria-label="Palet de la línea ' + (i + 1) + '"><option value=""' + (l.paletId ? '' : ' selected') + '>Elegir…</option>' +
       opts.map(function (r) { return '<option value="' + r.p.id + '"' + (r.p.id === l.paletId ? ' selected' : '') + '>N° ' + esc(r.p.num) + ' · saldo ' + fmtN(r.saldo) + '</option>'; }).join('') + '</select>';
   }
+  function splitSugerido(D, l) {
+    var r = D.rows.filter(function (x) { return x.p.id === l.paletId; })[0];
+    var n = r ? Math.floor(Math.min(r.saldo, Number(l.cajas) - 1)) : Math.floor(Number(l.cajas) / 2);
+    return String(Math.max(1, n));
+  }
+  function dividirLinea(pedId, i, a) {
+    var ped = state.pedidos.filter(function (p) { return p.id === pedId; })[0];
+    if (!ped) return;
+    var l = ped.lineas[i], P = state.params, tot = Number(l.cajas);
+    if (!l || l.confirmada) return;
+    if (!(a > 0 && a < tot)) { toast('Escribí un número de cajas mayor a 0 y menor a ' + fmtN(tot, 1) + '.', 'bad'); return; }
+    var b = Math.round((tot - a) * 1000) / 1000, kg = parseNum(l.kilos), D = derive();
+    var kgA = kg > 0 ? Math.round(kg * a / tot * 100) / 100 : null, kgB = kg > 0 ? Math.round((kg - kgA) * 100) / 100 : null;
+    var usado = {}; ped.lineas.forEach(function (x) { if (x.paletId && !x.confirmada) usado[x.paletId] = (usado[x.paletId] || 0) + (Number(x.cajas) || 0); });
+    var cur = D.rows.filter(function (x) { return x.p.id === l.paletId; })[0];
+    var sig = D.rows.filter(function (x) { return x.p.id !== l.paletId && x.saldo - (usado[x.p.id] || 0) >= b - 1e-9 && (!cur || cmpNum(x.p.num, cur.p.num) > 0); })
+      .sort(function (x, y) { return cmpNum(x.p.num, y.p.num); })[0];
+    var A = Object.assign({}, l, { cajas: a, unidades: a * P.unidCaja, kilos: kgA, nota: 'Dividida entre palets', sugerido: false });
+    var B = Object.assign({}, l, { id: 'l' + Date.now().toString(36), cajas: b, unidades: b * P.unidCaja, kilos: kgB, nota: 'Dividida entre palets', sugerido: !!sig, paletId: sig ? sig.p.id : null, paletNum: sig ? sig.p.num : '', fijoSin: false, confirmada: false, salidaId: null });
+    var nuevas = ped.lineas.slice(0, i).concat([A, B], ped.lineas.slice(i + 1));
+    ped.lineas = nuevas; state.splitLin = null;
+    return queue('ped' + pedId, function () {
+      return safe(function () { return state.db.doc('pedidos/' + pedId).update({ lineas: nuevas }).then(function () { toast('Línea dividida: ' + fmtN(a, 1) + ' cajas acá y ' + fmtN(b, 1) + ' en ' + (sig ? 'el palet ' + sig.p.num : 'otro palet (elegilo)') + '. Revisá los kilos de cada una.'); render(); }); }, 'No se pudo dividir la línea.');
+    });
+  }
   function lineaHints(l) {
     var P = state.params, hints = [];
     if (l.confirmada) hints.push(['ok', 'Cargada']);
@@ -1077,7 +1105,10 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
     if (l.confirmada) return '<tr class="done" data-row="' + ped.id + '|' + i + '"><td>' + esc(l.cliente) + h + '</td><td class="mono">N° ' + esc(l.paletNum) + '</td><td class="n">' + fmtN(l.cajas, 1) + '</td><td class="n">' + fmtN(l.unidades) + '</td><td class="n">' + fmtKg(kg) + '</td><td></td></tr>';
     return '<tr data-row="' + ped.id + '|' + i + '"><td>' + esc(l.cliente || '—') + h + '</td><td>' + selectPalet(D, l, ped, i) + '</td><td class="n">' + fmtN(l.cajas, 1) + '</td><td class="n">' + fmtN(l.unidades) + '</td>' +
       '<td class="n"><input class="kin" type="text" inputmode="decimal" data-kilos data-ped="' + ped.id + '" data-i="' + i + '" aria-label="Kilos pesados de la línea ' + (i + 1) + '" value="' + esc(l.kilos == null ? '' : l.kilos) + '"></td>' +
-      '<td><button class="btn sm" data-act="ped-conf" data-ped="' + ped.id + '" data-i="' + i + '"' + (kg > 0 && l.paletId ? '' : ' disabled') + '>Cargar</button></td></tr>';
+      '<td>' + (state.splitLin === ped.id + '|' + i ?
+        '<div class="splitbox"><label for="sp-c">Cajas de este palet</label><input type="text" inputmode="decimal" id="sp-c" class="kin" value="' + esc(splitSugerido(D, l)) + '"><button class="btn sm" data-act="lin-dividir-ok" data-ped="' + ped.id + '" data-i="' + i + '">Dividir</button><button class="btn sec sm" data-act="lin-dividir-cancel">Cancelar</button></div>' :
+        '<button class="btn sm" data-act="ped-conf" data-ped="' + ped.id + '" data-i="' + i + '"' + (kg > 0 && l.paletId ? '' : ' disabled') + '>Cargar</button>' +
+        (Number(l.cajas) > 1 ? ' <button class="btn sec sm" data-act="lin-dividir" data-ped="' + ped.id + '" data-i="' + i + '" title="Sacar esta línea de dos palets">Dividir</button>' : '')) + '</td></tr>';
   }
   function pedidoCard(D, ped) {
     var ls = ped.lineas || [], done = ls.filter(function (l) { return l.confirmada; }).length;
@@ -1192,7 +1223,7 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
     return '<div class="tw rt"><table><thead><tr><th>Fecha</th><th>Cliente</th><th>Palet</th><th class="n">Cajas</th><th class="n">Unidades</th><th class="n">Kilos</th><th class="n">Kg/caja</th><th></th></tr></thead><tbody>' +
       list.slice(0, 300).map(function (s) {
         var al = salAlerts(s, P), key = 'sal' + s.id, pc = Number(s.cajas) > 0 ? Number(s.kilos) / Number(s.cajas) : null;
-        return '<tr><td data-label="Fecha">' + fdate(s.fecha) + '</td><td class="first" data-label="Cliente">' + esc(s.cliente || '—') + (al.length ? '<div class="hint">' + al.map(function (t) { return '<span class="chip warn">' + esc(t) + '</span>'; }).join('') + '</div>' : '') + '</td><td class="mono" data-label="Palet">N° ' + esc(s.paletNum) + '</td><td class="n" data-label="Cajas">' + fmtN(s.cajas, 1) + '</td><td class="n" data-label="Unidades">' + fmtN(s.unidades) + '</td><td class="n" data-label="Kilos">' + (state.editSal === s.id ? '<input class="kin" type="text" inputmode="decimal" id="es-kg" aria-label="Kilos corregidos" value="' + esc(s.kilos) + '">' : fmtKg(Number(s.kilos))) + '</td><td class="n" data-label="Kg/caja">' + fmtN(pc, 1) + '</td><td data-label="">' + (!esAdmin() ? '' : state.editSal === s.id ? '<button class="btn sm" data-act="sal-edit-save" data-id="' + s.id + '">Guardar</button> <button class="btn sec sm" data-act="sal-edit-cancel">Cancelar</button>' : '<button class="btn sec sm" data-act="sal-edit" data-id="' + s.id + '">Editar kilos</button>') + '</td></tr>';
+        return '<tr><td data-label="Fecha">' + fdate(s.fecha) + '</td><td class="first" data-label="Cliente">' + esc(s.cliente || '—') + (al.length ? '<div class="hint">' + al.map(function (t) { return '<span class="chip warn">' + esc(t) + '</span>'; }).join('') + '</div>' : '') + '</td><td class="mono" data-label="Palet">N° ' + esc(s.paletNum) + '</td><td class="n" data-label="Cajas">' + fmtN(s.cajas, 1) + '</td><td class="n" data-label="Unidades">' + fmtN(s.unidades) + '</td><td class="n" data-label="Kilos">' + (state.editSal === s.id ? '<input class="kin" type="text" inputmode="decimal" id="es-kg" aria-label="Kilos corregidos" value="' + esc(s.kilos) + '">' : fmtKg(Number(s.kilos))) + '</td><td class="n" data-label="Kg/caja">' + fmtN(pc, 1) + '</td><td data-label="">' + (!esAdmin() ? '' : state.editSal === s.id ? '<button class="btn sm" data-act="sal-edit-save" data-id="' + s.id + '">Guardar</button> <button class="btn sec sm" data-act="sal-edit-cancel">Cancelar</button>' : '<button class="btn sec sm" data-act="sal-edit" data-id="' + s.id + '">Editar kilos</button> <button class="btn danger sm' + (state.confirmDel === key ? ' armed' : '') + '" data-act="sal-anular" data-id="' + s.id + '">' + (state.confirmDel === key ? 'Confirmar' : 'Anular') + '</button>') + '</td></tr>';
       }).join('') + '</tbody><tfoot><tr><td colspan="3" class="first">Total (' + list.length + ' salidas)</td><td class="n" data-label="Cajas">' + fmtN(tc, 1) + '</td><td class="n" data-label="Unidades">' + fmtN(tu) + '</td><td class="n" data-label="Kilos">' + fmtKg(tk) + '</td><td colspan="2"></td></tr></tfoot></table></div>';
   }
   function renderHistorial() {
@@ -1257,6 +1288,9 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
     else if (a === 'pal-del') confirmTwice('pd' + d.id, function () { borrarPalet(d.id); });
     else if (a === 'imp-armar') armarPedido();
     else if (a === 'imp-cancelar') { state.imp = null; render(); }
+    else if (a === 'lin-dividir') { state.splitLin = d.ped + '|' + d.i; render(); setTimeout(function () { var x = document.getElementById('sp-c'); if (x) { x.focus(); x.select(); } }, 0); }
+    else if (a === 'lin-dividir-cancel') { state.splitLin = null; render(); }
+    else if (a === 'lin-dividir-ok') { var xi = document.getElementById('sp-c'); dividirLinea(d.ped, Number(d.i), xi ? parseNum(xi.value) : null); }
     else if (a === 'ped-conf') confirmar(d.ped, [Number(d.i)]);
     else if (a === 'ped-conf-todas') {
       var ped = state.pedidos.filter(function (p) { return p.id === d.ped; })[0];
