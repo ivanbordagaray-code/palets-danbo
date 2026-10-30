@@ -686,7 +686,12 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
       var paletId = null, paletNum = '', fijoSin = false;
       if (pal) {
         var cands = D.rows.filter(function (x) { return String(x.p.num) === pal; });
-        var best = cands.filter(function (x) { return x.saldo > 0; })[0] || cands[0];
+        var rg = pal.match(/^(\d+)\s*(?:-|–|\/|y|a)\s*(\d+)$/i);
+        if (!cands.length && rg) {
+          var lo = +rg[1], hi = +rg[2];
+          cands = D.rows.filter(function (x) { var n = +x.p.num; return n >= lo && n <= hi; }).sort(function (a, b) { return cmpNum(a.p.num, b.p.num); });
+        }
+        var best = cands.filter(function (x) { return x.saldo >= caj; })[0] || cands.filter(function (x) { return x.saldo > 0; })[0] || cands[0];
         if (best) { paletId = best.p.id; paletNum = best.p.num; }
         else { paletNum = pal; fijoSin = true; nota = 'Palet no cargado'; }
       }
