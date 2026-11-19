@@ -662,7 +662,7 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
     var imp = state.imp, P = state.params;
     if (!imp) return [];
     var rows = imp.sheets[imp.sheet] || [], m = imp.map, out = [];
-    var D = state.D || derive();
+    var D = state.D || derive(), usadoFijo = {};
     for (var r = imp.headerRow + 1; r < rows.length; r++) {
       var row = rows[r];
       var cli = m.cliente >= 0 ? String(row[m.cliente] == null ? '' : row[m.cliente]).trim() : '';
@@ -690,15 +690,35 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
       var paletId = null, paletNum = '', fijoSin = false;
       if (pal) {
         var cands = D.rows.filter(function (x) { return String(x.p.num) === pal; });
-        var rg = pal.match(/^(\d+)\s*(?:-|–|\/|y|a)\s*(\d+)$/i);
-        if (!cands.length && rg) {
-          var lo = +rg[1], hi = +rg[2];
-          cands = D.rows.filter(function (x) { var n = +x.p.num; return n >= lo && n <= hi; }).sort(function (a, b) { return cmpNum(a.p.num, b.p.num); });
+        if (!cands.length && /^\d+(?:\s*(?:-|–|\/|,|y|a|e)\s*\d+)+$/i.test(pal)) {
+          var tk = pal.match(/\d+/g).map(Number);
+          cands = D.rows.filter(function (x) {
+            var n = +x.p.num;
+            return tk.length === 2 ? (n >= Math.min(tk[0], tk[1]) && n <= Math.max(tk[0], tk[1])) : tk.indexOf(n) >= 0;
+          }).sort(function (a, b) { return cmpNum(a.p.num, b.p.num); });
+          var libre = function (x) { return x.saldo - (usadoFijo[x.p.id] || 0); };
+          var uno = cands.filter(function (x) { return libre(x) >= caj; })[0];
+          if (!uno) {
+            var resto = caj, partes = [];
+            cands.forEach(function (x) {
+              var t = Math.min(Math.max(libre(x), 0), resto);
+              if (t > 0) { partes.push({ x: x, t: t }); resto -= t; }
+            });
+            if (partes.length > 1 && resto <= 1e-9) {
+              partes.forEach(function (q) {
+                usadoFijo[q.x.p.id] = (usadoFijo[q.x.p.id] || 0) + q.t;
+                out.push({ cliente: cli, cajas: q.t, unidades: q.t * P.unidCaja, kilos: (kg !== null && kg > 0 && caj > 0) ? Math.round(kg * q.t / caj * 100) / 100 : null, paletId: q.x.p.id, paletNum: q.x.p.num, confirmada: false, salidaId: null, sugerido: false, nota: 'Dividida entre palets ' + pal, fijoSin: false, paletTexto: pal });
+              });
+              continue;
+            }
+          }
+          cands = uno ? [uno] : cands;
         }
         var best = cands.filter(function (x) { return x.saldo >= caj; })[0] || cands.filter(function (x) { return x.saldo > 0; })[0] || cands[0];
-        if (best) { paletId = best.p.id; paletNum = best.p.num; }
+        if (best) { paletId = best.p.id; paletNum = best.p.num; usadoFijo[paletId] = (usadoFijo[paletId] || 0) + caj; }
         else { paletNum = pal; fijoSin = true; nota = 'Palet no cargado'; }
       }
+
       out.push({ cliente: cli, cajas: caj, unidades: uni, kilos: (kg !== null && kg > 0) ? kg : null, paletId: paletId, paletNum: paletNum, confirmada: false, salidaId: null, sugerido: false, nota: nota, fijoSin: fijoSin, paletTexto: pal });
     }
     return out;
