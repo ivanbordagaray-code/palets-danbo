@@ -754,9 +754,11 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
     return queue('ped' + pedId, function () { return safe(function () { return state.db.doc('pedidos/' + pedId).update({ lineas: lineas }); }); });
   }
   function confirmar(pedId, idxs) {
-    var ped = state.pedidos.filter(function (p) { return p.id === pedId; })[0];
-    if (!ped) return;
+    if (!state.pedidos.some(function (p) { return p.id === pedId; })) return;
     return queue('ped' + pedId, function () {
+      var ped = state.pedidos.filter(function (p) { return p.id === pedId; })[0];
+      if (!ped) return;
+      ped = Object.assign({}, ped, { lineas: (ped.lineas || []).slice() });
       var D = derive(), saldo = {}, ok = 0, errs = [];
       D.rows.forEach(function (r) { saldo[r.p.id] = r.saldo; });
       var chain = Promise.resolve();
