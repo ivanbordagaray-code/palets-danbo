@@ -555,7 +555,11 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
       }
     });
     alerts.sort(function (a, b) { return (a.n === 'bad' ? 0 : 1) - (b.n === 'bad' ? 0 : 1); });
-    return { rows: rows, alerts: alerts, totals: T };
+    var oc = {}; (state.ocultas || []).forEach(function (t) { oc[t] = 1; });
+    var todas = alerts.map(function (a) { return a.t; });
+    alerts = alerts.filter(function (a) { return !oc[a.t]; });
+    rows.forEach(function (r) { r.alerts = r.alerts.filter(function (a) { return !oc['Palet ' + r.p.num + ': ' + a.t]; }); });
+    return { rows: rows, alerts: alerts, todas: todas, totals: T };
   }
 
   /* ---------- Excel de Tremblay ---------- */
@@ -956,7 +960,7 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
   function alertsBlock(D) {
     if (!D.alerts.length) return '<section class="alerts"><div class="calm"><span class="dot"></span><span>Sin alertas. Los palets, remitos y pesadas cargados cierran.</span></div></section>';
     var list = state.allAlerts ? D.alerts : D.alerts.slice(0, 6);
-    return '<section class="alerts"><header><h2>Alertas · ' + D.alerts.length + '</h2>' + (D.alerts.length > 6 ? '<button class="btn sec sm" data-act="alertas-todas">' + (state.allAlerts ? 'Ver menos' : 'Ver todas') + '</button>' : '') + '</header><ul>' +
+    return '<section class="alerts"><header><h2>Alertas · ' + D.alerts.length + '</h2>' + (esAdmin() ? '<button class="btn sec sm" data-act="alertas-borrar">Borrar alertas</button>' : '') + (D.alerts.length > 6 ? '<button class="btn sec sm" data-act="alertas-todas">' + (state.allAlerts ? 'Ver menos' : 'Ver todas') + '</button>' : '') + '</header><ul>' +
       list.map(function (a) { return '<li><span class="dot ' + (a.n === 'bad' ? 'bad' : '') + '"></span><span>' + esc(a.t) + '</span></li>'; }).join('') + '</ul></section>';
   }
   function clientesHtml(id) {
@@ -1273,6 +1277,13 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
     var d = el.dataset;
     if (a === 'tab') { state.tab = d.v; render(); window.scrollTo(0, 0); }
     else if (a === 'filtro') { state.filtro = d.v; render(); }
+    else if (a === 'alertas-borrar') {
+      if (!esAdmin()) { toast('Esta clave es solo para mirar.', 'bad'); return; }
+      var tx = (state.D || derive()).todas || [];
+      state.ocultas = tx.slice();
+      try { localStorage.setItem('palets_alertas_ocultas', JSON.stringify(state.ocultas)); } catch (e) {}
+      toast('Alertas borradas. Las nuevas se van a seguir mostrando.'); render();
+    }
     else if (a === 'alertas-todas') { state.allAlerts = !state.allAlerts; render(); }
     else if (a === 'ing-armar') {
       var parsed = parseNumKg(state.ing.nums);
@@ -1400,6 +1411,7 @@ window.PALETS_CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbwTb8
         }, function (err) { console.error(err); state.error = 'nodb'; render(); });
       }
       sub('palets', 'palets'); sub('salidas', 'salidas'); sub('remitos', 'remitos'); sub('pedidos', 'pedidos');
+      try { state.ocultas = JSON.parse(localStorage.getItem('palets_alertas_ocultas') || '[]') || []; } catch (e) { state.ocultas = []; }
       db.doc('config/params').onSnapshot(function (s) {
         state.params = Object.assign({}, DEF, s.exists ? s.data() : {});
         state.loaded.params = true; schedule();
